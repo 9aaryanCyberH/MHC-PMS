@@ -23,11 +23,8 @@ export const AppProvider = ({ children }) => {
     return saved || 'patient';
   });
 
-  // Auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const saved = localStorage.getItem('mhc_authenticated');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
+  // Auth state - always starts unauthenticated on fresh open so login screen is presented first
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Patient profile
   const [patientProfile, setPatientProfile] = useState(() => {
@@ -130,8 +127,8 @@ export const AppProvider = ({ children }) => {
   }, [currentRole]);
 
   useEffect(() => {
-    localStorage.setItem('mhc_authenticated', JSON.stringify(isAuthenticated));
-  }, [isAuthenticated]);
+    localStorage.removeItem('mhc_authenticated');
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('mhc_patient_profile', JSON.stringify(patientProfile));
@@ -195,12 +192,49 @@ export const AppProvider = ({ children }) => {
 
   // Authentication
   const login = (identifier, password, targetRole = 'patient') => {
+    const validCredentials = {
+      patient: {
+        ids: ['pt-88204', 'aaryan.kumar@example.com', 'aaryan', 'demo'],
+        defaultPass: 'patient123',
+        name: patientProfile.fullName
+      },
+      doctor: {
+        ids: ['doc-001', 'shashank.pandey@mhc-pms.org', 'shashank', 'demo'],
+        defaultPass: 'doctor123',
+        name: staffProfiles.doctor?.fullName || 'Dr. Shashank Pandey'
+      },
+      receptionist: {
+        ids: ['rec-104', 'medha.banerjee@mhc-pms.org', 'medha', 'demo'],
+        defaultPass: 'reception123',
+        name: staffProfiles.receptionist?.fullName || 'Medha Banerjee'
+      },
+      admin: {
+        ids: ['adm-001', 'shounak.sarkar@mhc-pms.org', 'shounak', 'admin', 'demo'],
+        defaultPass: 'admin123',
+        name: staffProfiles.admin?.fullName || 'Shounak Sarkar'
+      }
+    };
+
+    const roleRule = validCredentials[targetRole] || validCredentials.patient;
+    const cleanId = identifier.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    const isIdMatch = roleRule.ids.includes(cleanId);
+    const isPassMatch = cleanPass === roleRule.defaultPass || cleanPass === 'demo' || cleanPass.length >= 4;
+
+    if (!isIdMatch || !isPassMatch) {
+      return {
+        success: false,
+        error: `Invalid credentials for ${targetRole.toUpperCase()} role. Hint: Use ID ${roleRule.ids[0].toUpperCase()} and Password ${roleRule.defaultPass}`
+      };
+    }
+
     setIsAuthenticated(true);
     setCurrentRole(targetRole);
 
     if (targetRole === 'patient') {
       setActiveTab('dashboard');
-      showToast(`Welcome back, ${patientProfile.fullName}!`);
+      showToast(`Welcome, ${patientProfile.fullName}! Patient Portal active.`);
     } else if (targetRole === 'doctor') {
       setActiveTab('clinical-queue');
       showToast(`Welcome, ${staffProfiles.doctor?.fullName || 'Dr. Shashank Pandey'}! Clinical workspace active.`);
