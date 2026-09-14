@@ -25,8 +25,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const { 
     activeTab, 
     setActiveTab, 
-    logout, 
-    currentRole,
+    logout,
     currentUser,
     appointments,
     isSidebarCollapsed,
@@ -45,108 +44,52 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     setIsSidebarCollapsed(true);
   };
 
-  // Define role-specific navigation menus
-  const getNavSections = () => {
-    if (currentRole === 'doctor') {
-      return [
-        {
-          title: 'CLINICAL WORKSPACE',
-          items: [
-            { id: 'clinical-queue', label: 'Consultation Queue & EHR', icon: Stethoscope, highlight: true }
-          ]
+  // Patient navigation menus
+  const navSections = [
+    {
+      title: null,
+      items: [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }
+      ]
+    },
+    {
+      title: 'APPOINTMENTS',
+      items: [
+        { 
+          id: 'availability', 
+          label: 'Check Doctor Availability', 
+          icon: CalendarClock,
+          highlight: true
         },
-        {
-          title: 'DIRECTORY',
-          items: [
-            { id: 'doctors', label: 'Specialist Directory', icon: Users }
-          ]
+        { id: 'book-appointment', label: 'Book Appointment', icon: CalendarPlus },
+        { 
+          id: 'appointments', 
+          label: 'My Appointments', 
+          icon: CalendarCheck,
+          badge: upcomingCount > 0 ? upcomingCount : null
         }
-      ];
+      ]
+    },
+    {
+      title: 'MEDICAL RECORDS',
+      items: [
+        { id: 'records', label: 'Patient Records (EHR)', icon: FileSpreadsheet },
+        { id: 'prescriptions-lab', label: 'Prescriptions & Lab Records', icon: FileText }
+      ]
+    },
+    {
+      title: 'SPECIALISTS',
+      items: [
+        { id: 'doctors', label: 'Doctor Information', icon: Stethoscope }
+      ]
+    },
+    {
+      title: 'ACCOUNT',
+      items: [
+        { id: 'profile', label: 'Profile & Settings', icon: User }
+      ]
     }
-
-    if (currentRole === 'receptionist') {
-      return [
-        {
-          title: 'FRONT DESK',
-          items: [
-            { id: 'clinic-desk', label: 'Reception & Scheduling Desk', icon: Building, highlight: true }
-          ]
-        },
-        {
-          title: 'DIRECTORY',
-          items: [
-            { id: 'doctors', label: 'Specialist Directory', icon: Stethoscope }
-          ]
-        }
-      ];
-    }
-
-    if (currentRole === 'admin') {
-      return [
-        {
-          title: 'ADMINISTRATIVE GOVERNANCE',
-          items: [
-            { id: 'system-overview', label: 'System Overview & Governance', icon: ShieldCheck, highlight: true }
-          ]
-        },
-        {
-          title: 'DIRECTORY',
-          items: [
-            { id: 'doctors', label: 'Specialist Directory', icon: Stethoscope }
-          ]
-        }
-      ];
-    }
-
-    // Default: Patient
-    return [
-      {
-        title: null,
-        items: [
-          { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }
-        ]
-      },
-      {
-        title: 'APPOINTMENTS',
-        items: [
-          { 
-            id: 'availability', 
-            label: 'Check Doctor Availability', 
-            icon: CalendarClock,
-            highlight: true
-          },
-          { id: 'book-appointment', label: 'Book Appointment', icon: CalendarPlus },
-          { 
-            id: 'appointments', 
-            label: 'My Appointments', 
-            icon: CalendarCheck,
-            badge: upcomingCount > 0 ? upcomingCount : null
-          }
-        ]
-      },
-      {
-        title: 'MEDICAL RECORDS',
-        items: [
-          { id: 'records', label: 'Patient Records', icon: FileSpreadsheet },
-          { id: 'prescriptions-lab', label: 'Prescriptions & Lab Records', icon: FileText }
-        ]
-      },
-      {
-        title: 'DOCTORS',
-        items: [
-          { id: 'doctors', label: 'Doctor Information', icon: Stethoscope }
-        ]
-      },
-      {
-        title: 'ACCOUNT',
-        items: [
-          { id: 'profile', label: 'Profile', icon: User }
-        ]
-      }
-    ];
-  };
-
-  const navSections = getNavSections();
+  ];
 
   return (
     <>
@@ -172,7 +115,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-white">MHC-PMS</span>
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-500/30">
-                  {currentRole.toUpperCase()}
+                  PATIENT PORTAL
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 font-medium">Mental Health Care</p>
@@ -204,7 +147,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950/80 px-1.5 py-0.5 rounded border border-indigo-800/60">
                 {currentUser.id}
               </span>
-              <span className="text-[10px] text-slate-400 capitalize">{currentUser.role || currentRole}</span>
+              <span className="text-[10px] text-indigo-400 font-semibold">Patient Portal</span>
             </div>
           </div>
         </div>

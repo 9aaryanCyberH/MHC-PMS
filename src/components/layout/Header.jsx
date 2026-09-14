@@ -3,6 +3,7 @@ import {
   Menu, 
   Search, 
   Bell, 
+  CalendarPlus,
   Calendar, 
   User, 
   LogOut, 
@@ -11,10 +12,7 @@ import {
   CheckCircle2, 
   Clock, 
   PanelLeftOpen,
-  Shield,
-  Stethoscope,
-  Users,
-  UserCheck
+  Sparkles
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -22,23 +20,20 @@ export const Header = ({ setIsMobileOpen }) => {
   const { 
     activeTab, 
     setActiveTab, 
-    currentRole,
-    switchRole,
     currentUser,
     logout, 
     appointments, 
     isSidebarCollapsed,
-    setIsSidebarCollapsed 
+    setIsSidebarCollapsed,
+    setIsBookingModalOpen
   } = useApp();
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
 
   const upcomingAppointments = appointments.filter(a => a.status === 'Upcoming');
 
   const pageTitles = {
-    // Patient
     dashboard: 'Patient Health Dashboard',
     availability: 'Check Doctor Availability',
     'book-appointment': 'Book Appointment',
@@ -46,20 +41,7 @@ export const Header = ({ setIsMobileOpen }) => {
     records: 'Electronic Health Records (EHR)',
     'prescriptions-lab': 'Prescriptions & Diagnostic Lab Reports',
     doctors: 'Clinical Specialists Directory',
-    profile: 'Patient Profile & Settings',
-    // Doctor
-    'clinical-queue': 'Clinician Consultation Queue',
-    // Receptionist
-    'clinic-desk': 'Central Reception & Scheduling Desk',
-    // Admin
-    'system-overview': 'System Governance & Administrative Portal'
-  };
-
-  const roleMeta = {
-    patient: { label: 'Patient Portal', icon: User, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
-    doctor: { label: 'Attending Doctor', icon: Stethoscope, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-    receptionist: { label: 'Reception Desk', icon: Users, color: 'text-sky-700 bg-sky-50 border-sky-200' },
-    admin: { label: 'System Admin', icon: Shield, color: 'text-purple-700 bg-purple-50 border-purple-200' }
+    profile: 'Patient Profile & Settings'
   };
 
   const currentDate = new Date('2026-09-18T10:00:00').toLocaleDateString('en-US', {
@@ -105,60 +87,28 @@ export const Header = ({ setIsMobileOpen }) => {
         </div>
       </div>
 
-      {/* Right side: Role Switcher + Emergency helpline + Date + Notifications + User chip */}
-      <div className="flex items-center gap-2.5 sm:gap-4">
-        {/* Quick Role Switcher Pill */}
-        <div className="relative">
-          <button
-            onClick={() => setShowRoleMenu(!showRoleMenu)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-2xs cursor-pointer ${
-              roleMeta[currentRole]?.color || 'bg-slate-100 text-slate-700'
-            }`}
-            title="Switch User Role View"
-          >
-            {React.createElement(roleMeta[currentRole]?.icon || User, { className: 'w-3.5 h-3.5' })}
-            <span className="hidden md:inline">{roleMeta[currentRole]?.label}</span>
-            <ChevronDown className="w-3 h-3 opacity-70" />
-          </button>
+      {/* Right side: Book Quick Button + Patient Portal Indicator + Emergency helpline + Date + Notifications + User chip */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Quick Book Button */}
+        <button
+          onClick={() => setIsBookingModalOpen(true)}
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs hover:shadow-indigo-500/20 active:scale-95 cursor-pointer"
+        >
+          <CalendarPlus className="w-3.5 h-3.5" />
+          <span>Book Visit</span>
+        </button>
 
-          {showRoleMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-3.5 py-2 border-b border-slate-100">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Switch Role View</span>
-              </div>
-              {[
-                { role: 'patient', label: 'Patient (Aaryan Kumar)', desc: 'Appointments, EHR & Prescriptions' },
-                { role: 'doctor', label: 'Doctor (Dr. Shashank Pandey)', desc: 'Clinical Queue & Prescribing' },
-                { role: 'receptionist', label: 'Receptionist (Medha Banerjee)', desc: 'Walk-ins, Check-in & Billing' },
-                { role: 'admin', label: 'System Admin (Shounak Sarkar)', desc: 'Accounts, Sync & Reports' }
-              ].map(item => (
-                <button
-                  key={item.role}
-                  onClick={() => {
-                    switchRole(item.role);
-                    setShowRoleMenu(false);
-                  }}
-                  className={`w-full text-left px-3.5 py-2 hover:bg-slate-50 transition cursor-pointer flex flex-col ${
-                    currentRole === item.role ? 'bg-indigo-50/70' : ''
-                  }`}
-                >
-                  <span className={`text-xs font-bold ${currentRole === item.role ? 'text-indigo-700' : 'text-slate-800'}`}>
-                    {item.label}
-                  </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">{item.desc}</span>
-                </button>
-              ))}
-            </div>
-          )}
+        {/* Dedicated Patient Portal Badge */}
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold shadow-2xs">
+          <User className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Patient Portal</span>
         </div>
 
-        {/* Helpline Pill (Visible for Patient) */}
-        {currentRole === 'patient' && (
-          <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-200/70 rounded-full text-xs text-indigo-900 font-medium">
-            <PhoneCall className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
-            <span>24x7 Helpline: <strong>1800-599-0019</strong></span>
-          </div>
-        )}
+        {/* Helpline Pill */}
+        <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-emerald-50 border border-emerald-200/80 rounded-full text-xs text-emerald-900 font-medium">
+          <PhoneCall className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+          <span>Helpline: <strong>14416</strong></span>
+        </div>
 
         {/* Date pill */}
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-lg text-xs font-medium text-slate-600 border border-slate-200/60">
@@ -195,7 +145,7 @@ export const Header = ({ setIsMobileOpen }) => {
                     <div 
                       key={apt.id} 
                       onClick={() => {
-                        if (currentRole === 'patient') setActiveTab('appointments');
+                        setActiveTab('appointments');
                         setShowNotifications(false);
                       }}
                       className="p-2.5 rounded-xl bg-slate-50 hover:bg-indigo-50/60 transition cursor-pointer border border-slate-100"
@@ -246,22 +196,20 @@ export const Header = ({ setIsMobileOpen }) => {
               <div className="px-4 py-2 border-b border-slate-100">
                 <p className="text-xs font-bold text-slate-900">{currentUser.fullName}</p>
                 <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
-                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md">
-                  {currentUser.role}
+                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-100">
+                  Patient Portal
                 </span>
               </div>
-              {currentRole === 'patient' && (
-                <button
-                  onClick={() => {
-                    setActiveTab('profile');
-                    setShowProfileMenu(false);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-indigo-700 transition cursor-pointer"
-                >
-                  <User className="w-4 h-4" />
-                  <span>My Profile</span>
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setActiveTab('profile');
+                  setShowProfileMenu(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 hover:text-indigo-700 transition cursor-pointer"
+              >
+                <User className="w-4 h-4" />
+                <span>My Profile</span>
+              </button>
               <div className="border-t border-slate-100 my-1" />
               <button
                 onClick={() => {

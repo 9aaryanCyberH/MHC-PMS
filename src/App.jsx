@@ -12,14 +12,10 @@ import { PrescriptionsLabView } from './components/modules/PrescriptionsLabView'
 import { DoctorsView } from './components/modules/DoctorsView';
 import { PatientProfileView } from './components/modules/PatientProfileView';
 import { BookAppointmentModal } from './components/modules/BookAppointmentModal';
-import { DoctorClinicalView } from './components/modules/DoctorClinicalView';
-import { ReceptionistDeskView } from './components/modules/ReceptionistDeskView';
-import { AdminGovernanceView } from './components/modules/AdminGovernanceView';
 
 const MainLayout = () => {
   const { 
     isAuthenticated, 
-    currentRole,
     activeTab, 
     isBookingModalOpen, 
     setIsBookingModalOpen,
@@ -30,7 +26,7 @@ const MainLayout = () => {
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // If unauthenticated, show the multi-role login screen
+  // If unauthenticated, show the confidential patient login screen
   if (!isAuthenticated) {
     return (
       <>
@@ -41,28 +37,10 @@ const MainLayout = () => {
   }
 
   const renderActiveModule = () => {
-    // Role-specific routing
-    if (currentRole === 'doctor') {
-      if (activeTab === 'doctors') return <DoctorsView />;
-      return <DoctorClinicalView />;
-    }
-
-    if (currentRole === 'receptionist') {
-      if (activeTab === 'doctors') return <DoctorsView />;
-      return <ReceptionistDeskView />;
-    }
-
-    if (currentRole === 'admin') {
-      if (activeTab === 'doctors') return <DoctorsView />;
-      return <AdminGovernanceView />;
-    }
-
-    // Default: Patient Role
     switch (activeTab) {
       case 'dashboard':
         return <DashboardView />;
       case 'availability':
-        return <AvailabilityView />;
       case 'book-appointment':
         return <AvailabilityView />;
       case 'appointments':
@@ -104,7 +82,7 @@ const MainLayout = () => {
               <strong>MHC-PMS</strong> — Mental Health Care Patient Management System
             </p>
             <p className="text-[11px] text-slate-400">
-              Multi-Role Healthcare Management Portal • Confidential & Secure
+              Confidential Patient Portal • 256-Bit Encrypted Healthcare Records
             </p>
           </footer>
         </div>
