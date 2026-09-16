@@ -13,10 +13,18 @@ import {
   Activity, 
   FlaskConical, 
   ChevronRight, 
-  Search,
-  ExternalLink,
-  Save,
-  X
+  Search, 
+  Save, 
+  X,
+  AlertTriangle,
+  ShieldAlert,
+  Brain,
+  FileCheck,
+  ArrowRightLeft,
+  Sparkles,
+  Heart,
+  TrendingDown,
+  Building
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -29,45 +37,85 @@ export const DoctorClinicalView = () => {
     prescriptions, 
     addNewPrescription, 
     labRecords, 
-    patientProfile,
-    activeTab,
-    setActiveTab,
+    orderLabTest,
+    patientRecordsList,
+    patientRiskAlerts,
+    updatePatientRiskAlert,
+    switchRoleWithLogout,
     showToast
   } = useApp();
 
-  // Internal tab: 'queue' | 'patients' | 'prescriptions' | 'speciality' | 'labs'
+  // Internal tab: 'queue' | 'patients' | 'prescriptions' | 'labs' | 'alerts' | 'speciality'
   const [currentSubTab, setCurrentSubTab] = useState('queue');
+  const [selectedPatientId, setSelectedPatientId] = useState('PT-88204');
+  const [queueStatusFilter, setQueueStatusFilter] = useState('All');
 
-  // New Prescription Modal State
+  // 1. New Prescription Modal State
   const [isRxModalOpen, setIsRxModalOpen] = useState(false);
   const [rxForm, setRxForm] = useState({
-    patientId: patientProfile.id,
-    patientName: patientProfile.fullName,
+    patientId: 'PT-88204',
+    patientName: 'Aaryan Kumar',
     medicineName: '',
-    category: 'Antidepressant',
-    dosage: '',
-    frequency: 'Once Daily (Morning after food)',
+    category: 'Antidepressant (SSRI)',
+    dosage: '50mg',
+    frequency: 'Once Daily (Morning after breakfast)',
     duration: '30 Days',
     instructions: 'Take consistently with water. Do not discontinue abruptly.',
     refills: 1
   });
 
-  // Edit Doctor Profile Modal State
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [profileForm, setProfileForm] = useState({
-    fullName: doctorProfile.fullName,
-    title: doctorProfile.title,
-    qualifications: doctorProfile.qualifications,
-    consultationFee: doctorProfile.consultationFee,
-    opdRoom: doctorProfile.opdRoom,
-    schedule: doctorProfile.schedule,
-    bio: doctorProfile.bio
+  // 2. Order Lab / Psychometric Test Modal State
+  const [isOrderLabModalOpen, setIsOrderLabModalOpen] = useState(false);
+  const [labOrderForm, setLabOrderForm] = useState({
+    patientId: 'PT-88204',
+    patientName: 'Aaryan Kumar',
+    testName: 'PHQ-9 (Patient Health Questionnaire - 9 Item)',
+    category: 'Psychometric Assessment Scale',
+    urgency: 'Routine Evaluation',
+    clinicalRationale: 'Bi-weekly psychometric monitoring for depressive and anxiety symptomatology.'
   });
 
-  // Filter appointments for this doctor (DOC-001 or all)
-  const doctorAppointments = appointments.filter(
-    apt => apt.doctorId === doctorProfile.id || apt.doctorName.includes('Shashank')
-  );
+  // 3. Clinical Risk Alert Modal State
+  const [isRiskModalOpen, setIsRiskModalOpen] = useState(false);
+  const [riskForm, setRiskForm] = useState({
+    patientId: 'PT-88204',
+    patientName: 'Aaryan Kumar',
+    riskLevel: 'Low',
+    alertType: 'Affective Symptom Review',
+    summary: 'Mild performance anxiety noted; no self-harm ideation reported.',
+    actionPlan: 'Continue current psychopharmacology; review CBT progress in 2 weeks.'
+  });
+
+  // 4. Edit Doctor Profile Modal State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    fullName: doctorProfile?.fullName || 'Dr. Shashank Pandey',
+    title: doctorProfile?.title || 'Senior Consultant Psychiatrist',
+    qualifications: doctorProfile?.qualifications || 'MBBS, MD (Psychiatry), DPM, FIPS',
+    consultationFee: doctorProfile?.consultationFee || 1200,
+    opdRoom: doctorProfile?.opdRoom || 'OPD Suite 204, East Wing',
+    schedule: doctorProfile?.schedule || 'Monday to Saturday, 09:00 AM - 02:00 PM',
+    bio: doctorProfile?.bio || 'Senior consultant psychiatrist with extensive experience in affective mood disorders.'
+  });
+
+  // Currently selected patient record
+  const currentPatient = (patientRecordsList || []).find(p => p.id === selectedPatientId) || patientRecordsList?.[0] || {
+    id: "PT-88204",
+    fullName: "Aaryan Kumar",
+    age: 21,
+    gender: "Male",
+    bloodGroup: "A+",
+    phone: "+91 98765 43210",
+    primaryDiagnosis: "Generalized Anxiety Disorder (GAD)",
+    severity: "Mild to Moderate"
+  };
+
+  // Filter appointments for this doctor
+  const doctorAppointments = appointments.filter(apt => {
+    const isDoc = apt.doctorId === doctorProfile?.id || apt.doctorName?.includes('Shashank') || apt.doctorId === 'DOC-001';
+    const isStatus = queueStatusFilter === 'All' || apt.status === queueStatusFilter;
+    return isDoc && isStatus;
+  });
 
   const handleCreatePrescription = (e) => {
     e.preventDefault();
@@ -78,16 +126,28 @@ export const DoctorClinicalView = () => {
     addNewPrescription(rxForm);
     setIsRxModalOpen(false);
     setRxForm({
-      patientId: patientProfile.id,
-      patientName: patientProfile.fullName,
+      patientId: currentPatient.id,
+      patientName: currentPatient.fullName,
       medicineName: '',
-      category: 'Antidepressant',
-      dosage: '',
-      frequency: 'Once Daily (Morning after food)',
+      category: 'Antidepressant (SSRI)',
+      dosage: '50mg',
+      frequency: 'Once Daily (Morning after breakfast)',
       duration: '30 Days',
       instructions: 'Take consistently with water. Do not discontinue abruptly.',
       refills: 1
     });
+  };
+
+  const handleOrderLab = (e) => {
+    e.preventDefault();
+    orderLabTest(labOrderForm);
+    setIsOrderLabModalOpen(false);
+  };
+
+  const handleSaveRiskAlert = (e) => {
+    e.preventDefault();
+    updatePatientRiskAlert(riskForm);
+    setIsRiskModalOpen(false);
   };
 
   const handleUpdateProfile = (e) => {
@@ -96,245 +156,373 @@ export const DoctorClinicalView = () => {
     setIsEditProfileOpen(false);
   };
 
+  const doctorTabs = [
+    { id: 'queue', label: 'Consultation Queue', icon: Clock, count: doctorAppointments.length },
+    { id: 'patients', label: 'Psychiatric EHR & Summaries', icon: FileText, count: patientRecordsList?.length || 0 },
+    { id: 'prescriptions', label: 'e-Prescribing (e-Rx)', icon: Pill, count: prescriptions.length },
+    { id: 'labs', label: 'Psychometric & Lab Scales', icon: FlaskConical, count: labRecords.length },
+    { id: 'alerts', label: 'Health Risk Alerts', icon: ShieldAlert, count: patientRiskAlerts?.length || 0, highlight: true },
+    { id: 'speciality', label: 'My Speciality Profile', icon: Stethoscope }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Clinician Profile Hero Card */}
-      <div className="bg-linear-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-900/40 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4 sm:gap-6">
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* 1. Doctor Clinician Identity Hero Card */}
+      <div className="bg-linear-to-r from-slate-900 via-emerald-950 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-emerald-900/40 relative overflow-hidden">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          <div className="flex items-center gap-4 sm:gap-5">
             <img 
-              src={doctorProfile.avatar} 
-              alt={doctorProfile.fullName}
-              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-indigo-500/30 shadow-lg"
+              src={doctorProfile?.avatar || 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300'} 
+              alt={doctorProfile?.fullName || 'Doctor'}
+              className="w-18 h-18 rounded-2xl object-cover ring-4 ring-emerald-500/30 shadow-md shrink-0"
             />
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                  {doctorProfile.role} • {doctorProfile.id}
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                  {doctorProfile?.role || 'Doctor'} • {doctorProfile?.id || 'DOC-001'}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-teal-500/20 text-teal-300 border border-teal-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  On-Duty Consulting
+                  Clinical Consultation Suite Active
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                {doctorProfile.fullName}
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                {doctorProfile?.fullName || 'Dr. Shashank Pandey'}
               </h2>
-              <p className="text-xs sm:text-sm text-indigo-200/80">
-                {doctorProfile.title} • {doctorProfile.qualifications}
+              <p className="text-xs sm:text-sm text-emerald-200/90 font-medium">
+                {doctorProfile?.title || 'Senior Consultant Psychiatrist'} • {doctorProfile?.department || 'Adult Psychiatry & Neuropsychiatry'}
               </p>
-              <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                <span>{doctorProfile.opdRoom}</span>
-                <span>•</span>
-                <span>Consultation Fee: ₹{doctorProfile.consultationFee}</span>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {doctorProfile?.opdRoom || 'OPD Suite 204, East Wing'} • Fee: ₹{doctorProfile?.consultationFee || 1200}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => setIsEditProfileOpen(true)}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 transition flex items-center gap-2 shadow-xs cursor-pointer"
+              onClick={() => {
+                setRxForm(prev => ({ ...prev, patientName: currentPatient.fullName, patientId: currentPatient.id }));
+                setIsRxModalOpen(true);
+              }}
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Update Speciality & Info</span>
+              <Pill className="w-4 h-4" />
+              <span>Write e-Prescription</span>
             </button>
             <button
-              onClick={() => setIsRxModalOpen(true)}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-2 shadow-md cursor-pointer"
+              onClick={() => {
+                setLabOrderForm(prev => ({ ...prev, patientName: currentPatient.fullName, patientId: currentPatient.id }));
+                setIsOrderLabModalOpen(true);
+              }}
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Write Prescription</span>
+              <FlaskConical className="w-4 h-4" />
+              <span>Order Lab Test</span>
+            </button>
+            <button
+              onClick={() => switchRoleWithLogout('patient')}
+              className="px-3 py-2 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 border border-white/20 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <ArrowRightLeft className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Switch Role</span>
             </button>
           </div>
         </div>
 
-        {/* Quick Stats Strip */}
-        <div className="mt-6 pt-6 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Scheduled Today</p>
-            <p className="text-xl font-black text-white mt-0.5">{doctorAppointments.length}</p>
+        {/* Quick Clinical Highlights */}
+        <div className="mt-5 pt-5 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
+            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Today's Patients</p>
+            <p className="text-lg font-black text-white mt-0.5">{doctorAppointments.length}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Assigned Patients</p>
-            <p className="text-xl font-black text-indigo-300 mt-0.5">28</p>
+          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
+            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Active Prescriptions</p>
+            <p className="text-lg font-black text-emerald-300 mt-0.5">{prescriptions.length}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Active Prescriptions</p>
-            <p className="text-xl font-black text-emerald-300 mt-0.5">{prescriptions.length}</p>
+          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
+            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Diagnostic Orders</p>
+            <p className="text-lg font-black text-teal-300 mt-0.5">{labRecords.length}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-            <p className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Lab Reviews Pending</p>
-            <p className="text-xl font-black text-amber-300 mt-0.5">{labRecords.length}</p>
+          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
+            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Risk Alerts Flagged</p>
+            <p className="text-lg font-black text-rose-300 mt-0.5">{patientRiskAlerts?.filter(r => r.riskLevel === 'High').length || 1} High</p>
           </div>
         </div>
       </div>
 
-      {/* Sub-Navigation Pills */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200/80 pb-3">
-        {[
-          { id: 'queue', label: 'Consultation Queue', icon: Clock },
-          { id: 'patients', label: 'Assigned Patients (EHR)', icon: User },
-          { id: 'prescriptions', label: 'Clinical Prescriptions', icon: Pill },
-          { id: 'labs', label: 'Diagnostic Lab Reviews', icon: FlaskConical },
-          { id: 'speciality', label: 'Speciality & OPD Details', icon: Stethoscope }
-        ].map(tab => {
+      {/* Sub-Navigation Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
+        {doctorTabs.map(tab => {
           const Icon = tab.icon;
           const isActive = currentSubTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setCurrentSubTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                 isActive 
-                  ? 'bg-indigo-600 text-white shadow-sm' 
+                  ? 'bg-emerald-600 text-white shadow-sm' 
+                  : tab.highlight
+                  ? 'bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100'
                   : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/80'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
+              {tab.count !== undefined && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Tab 1: Consultation Queue */}
+      {/* ========================================================================= */}
+      {/* SUBTAB 1: CONSULTATION QUEUE */}
+      {/* ========================================================================= */}
       {currentSubTab === 'queue' && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Today's Consultation Schedule</h3>
-              <p className="text-xs text-slate-500">Confirmed patient consultations assigned to {doctorProfile.fullName}</p>
+              <h3 className="text-base font-bold text-slate-900">Clinician Consultation Queue</h3>
+              <p className="text-xs text-slate-500">Scheduled patients for today, triage statuses, and quick action buttons</p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-200">
-              {doctorAppointments.length} Consultations
-            </span>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={queueStatusFilter}
+                onChange={(e) => setQueueStatusFilter(e.target.value)}
+                className="px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden bg-white"
+              >
+                <option value="All">All Queue</option>
+                <option value="Upcoming">Upcoming / In Waiting</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            {doctorAppointments.map(apt => (
-              <div 
-                key={apt.id}
-                className="p-4 rounded-2xl border border-slate-200/70 hover:border-indigo-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50"
-              >
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm shrink-0">
-                    {apt.time.split(' ')[0]}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-800">{apt.id}</span>
-                      <span className="text-[11px] px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-medium">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 text-[11px] font-bold uppercase text-slate-400">
+                  <th className="py-3 px-4">Token / ID</th>
+                  <th className="py-3 px-4">Patient Name</th>
+                  <th className="py-3 px-4">Slot & Time</th>
+                  <th className="py-3 px-4">Consultation Reason</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Clinical Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                {doctorAppointments.map(apt => (
+                  <tr key={apt.id} className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-bold text-emerald-700 font-mono">{apt.id}</td>
+                    <td className="py-3 px-4">
+                      <p className="font-bold text-slate-900">{apt.patientName || 'Aaryan Kumar'}</p>
+                      <p className="text-[10px] text-slate-400">{apt.type}</p>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-slate-800">{apt.time}</span>
+                      <span className="text-[11px] text-slate-400 block">{apt.displayDate || apt.date}</span>
+                    </td>
+                    <td className="py-3 px-4 max-w-xs truncate text-slate-600">
+                      {apt.reason || 'Routine psychiatric assessment and prescription check'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full ${
+                        apt.status === 'Upcoming' ? 'bg-sky-100 text-sky-800' :
+                        apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+                        'bg-rose-100 text-rose-800'
+                      }`}>
                         {apt.status}
                       </span>
-                      <span className="text-xs text-slate-400">• {apt.type}</span>
-                    </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-0.5">
-                      Patient: {patientProfile.fullName} <span className="text-xs font-normal text-slate-500">({patientProfile.id})</span>
-                    </h4>
-                    <p className="text-xs text-slate-600 mt-1">
-                      <strong>Clinical Reason:</strong> {apt.reason}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => setCurrentSubTab('patients')}
-                    className="px-3 py-1.5 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl transition cursor-pointer"
-                  >
-                    View History
-                  </button>
-                  <button
-                    onClick={() => setIsRxModalOpen(true)}
-                    className="px-3 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition shadow-xs flex items-center gap-1 cursor-pointer"
-                  >
-                    <Pill className="w-3.5 h-3.5" />
-                    <span>Prescribe</span>
-                  </button>
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => {
+                            setSelectedPatientId('PT-88204');
+                            setCurrentSubTab('patients');
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition cursor-pointer"
+                        >
+                          Open EHR
+                        </button>
+                        <button
+                          onClick={() => {
+                            setRxForm(prev => ({ ...prev, patientName: apt.patientName || 'Aaryan Kumar' }));
+                            setIsRxModalOpen(true);
+                          }}
+                          className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition cursor-pointer"
+                        >
+                          Prescribe
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Tab 2: Assigned Patients (EHR) */}
+      {/* ========================================================================= */}
+      {/* SUBTAB 2: PSYCHIATRIC EHR & SUMMARIES */}
+      {/* ========================================================================= */}
       {currentSubTab === 'patients' && (
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Psychiatric Medical Records — {patientProfile.fullName}</h3>
-              <p className="text-xs text-slate-500">Patient ID: {patientProfile.id} • Age: {patientProfile.age || 21} • Blood Group: {patientProfile.bloodGroup || 'A+'} • Attending: {doctorProfile.fullName}</p>
-            </div>
-            <button
-              onClick={() => setIsRxModalOpen(true)}
-              className="px-3.5 py-1.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition flex items-center gap-1.5 self-start cursor-pointer"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Add Clinical Prescription</span>
-            </button>
-          </div>
-
-          {/* Vitals Summary */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-100">
-              <p className="text-[11px] font-semibold text-indigo-700">Blood Pressure</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">{medicalRecords.vitals.bloodPressure}</p>
-              <p className="text-[10px] text-slate-500">Normal Range</p>
-            </div>
-            <div className="p-3.5 bg-rose-50/60 rounded-2xl border border-rose-100">
-              <p className="text-[11px] font-semibold text-rose-700">Resting Heart Rate</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">{medicalRecords.vitals.heartRate}</p>
-              <p className="text-[10px] text-slate-500">Slight resting tachycardia</p>
-            </div>
-            <div className="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-100">
-              <p className="text-[11px] font-semibold text-emerald-700">Body Mass Index</p>
-              <p className="text-lg font-bold text-slate-900 mt-0.5">{medicalRecords.vitals.bmi}</p>
-              <p className="text-[10px] text-slate-500">Optimal BMI</p>
-            </div>
-            <div className="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-100">
-              <p className="text-[11px] font-semibold text-amber-700">Active Diagnosis</p>
-              <p className="text-sm font-bold text-slate-900 mt-0.5 truncate">{medicalRecords.diagnoses[0].code}</p>
-              <p className="text-[10px] text-slate-500 truncate">{medicalRecords.diagnoses[0].name}</p>
-            </div>
-          </div>
-
-          {/* Clinical Encounter History */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Clinical Consultation Encounters</h4>
-            <div className="space-y-3">
-              {medicalRecords.previousConsultations.map(enc => (
-                <div key={enc.id} className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-indigo-700">{enc.doctor}</span>
-                    <span className="text-xs text-slate-400">{enc.displayDate}</span>
-                  </div>
-                  <p className="text-xs font-semibold text-slate-800">Primary Diagnosis: {enc.diagnosis}</p>
-                  <p className="text-xs text-slate-600 mt-1">{enc.notes}</p>
-                </div>
+        <div className="space-y-6">
+          {/* Patient Selector Pills */}
+          <div className="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 overflow-x-auto">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Select Outpatient:</span>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {(patientRecordsList || []).map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedPatientId(p.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    currentPatient.id === p.id 
+                      ? 'bg-emerald-600 text-white shadow-xs' 
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {p.fullName} ({p.id})
+                </button>
               ))}
             </div>
           </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Active Clinical Record
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">ID: {currentPatient.id}</span>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mt-1">{currentPatient.fullName}</h3>
+                <p className="text-xs text-slate-500">
+                  {currentPatient.age} Yrs • {currentPatient.gender} • Blood Group: {currentPatient.bloodGroup} • {currentPatient.phone}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setRiskForm({
+                      patientId: currentPatient.id,
+                      patientName: currentPatient.fullName,
+                      riskLevel: 'Low',
+                      alertType: 'Affective Symptom Review',
+                      summary: `Clinical review for ${currentPatient.fullName}`,
+                      actionPlan: 'Routine monitoring'
+                    });
+                    setIsRiskModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Update Risk Alert</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setRxForm(prev => ({ ...prev, patientName: currentPatient.fullName, patientId: currentPatient.id }));
+                    setIsRxModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Pill className="w-3.5 h-3.5" />
+                  <span>e-Prescribe</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Vitals & Clinical Summaries */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase font-bold">Blood Pressure</p>
+                <p className="text-sm font-black text-slate-800 mt-0.5">{medicalRecords.vitals.bloodPressure}</p>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase font-bold">Resting Heart Rate</p>
+                <p className="text-sm font-black text-emerald-700 mt-0.5">{medicalRecords.vitals.heartRate}</p>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase font-bold">BMI & Weight</p>
+                <p className="text-sm font-black text-slate-800 mt-0.5">{medicalRecords.vitals.weight} ({medicalRecords.vitals.bmi})</p>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase font-bold">Primary Diagnosis</p>
+                <p className="text-xs font-bold text-indigo-700 truncate mt-0.5">{currentPatient.primaryDiagnosis}</p>
+              </div>
+            </div>
+
+            {/* Diagnoses & Treatment Plan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-indigo-600" />
+                  <span>Clinical Psychiatric Assessment</span>
+                </h4>
+                {medicalRecords.diagnoses.map((d, i) => (
+                  <div key={i} className="p-3 bg-white rounded-xl border border-slate-200/60 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900">{d.title}</span>
+                      <span className="text-[10px] font-mono text-slate-400">{d.code}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600">{d.summary}</p>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded inline-block">
+                      {d.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-rose-600" />
+                  <span>Allergies & Contraindications</span>
+                </h4>
+                {medicalRecords.allergies.map((al, i) => (
+                  <div key={i} className="p-3 bg-white rounded-xl border border-slate-200/60 text-xs flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-rose-900">{al.substance} ({al.type})</p>
+                      <p className="text-[11px] text-slate-500">{al.reaction}</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                      {al.severity}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Tab 3: Clinical Prescriptions */}
+      {/* ========================================================================= */}
+      {/* SUBTAB 3: E-PRESCRIBING (E-RX) */}
+      {/* ========================================================================= */}
       {currentSubTab === 'prescriptions' && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Psychopharmacology & Treatment Regimens</h3>
-              <p className="text-xs text-slate-500">Active medical prescriptions issued to patients</p>
+              <h3 className="text-base font-bold text-slate-900">Psychopharmacology & e-Prescription Records</h3>
+              <p className="text-xs text-slate-500">Issue signed e-prescriptions with dosage, course, and medication instructions</p>
             </div>
+
             <button
               onClick={() => setIsRxModalOpen(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Issue New e-Rx</span>
+              <Pill className="w-3.5 h-3.5" />
+              <span>Write e-Prescription</span>
             </button>
           </div>
 
@@ -343,26 +531,32 @@ export const DoctorClinicalView = () => {
               <thead>
                 <tr className="border-b border-slate-200 text-[11px] font-bold uppercase text-slate-400">
                   <th className="py-3 px-4">Rx ID</th>
-                  <th className="py-3 px-4">Medication</th>
-                  <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Dosage</th>
-                  <th className="py-3 px-4">Frequency</th>
+                  <th className="py-3 px-4">Patient</th>
+                  <th className="py-3 px-4">Medication & Category</th>
+                  <th className="py-3 px-4">Dosage & Regimen</th>
                   <th className="py-3 px-4">Duration</th>
+                  <th className="py-3 px-4">Prescribed Date</th>
                   <th className="py-3 px-4">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
                 {prescriptions.map(rx => (
                   <tr key={rx.id} className="hover:bg-slate-50/60">
-                    <td className="py-3 px-4 font-bold text-indigo-600">{rx.id}</td>
-                    <td className="py-3 px-4 font-bold text-slate-900">{rx.medicineName}</td>
-                    <td className="py-3 px-4 text-slate-500">{rx.category}</td>
-                    <td className="py-3 px-4 font-semibold text-slate-800">{rx.dosage}</td>
-                    <td className="py-3 px-4">{rx.frequency}</td>
-                    <td className="py-3 px-4">{rx.duration}</td>
+                    <td className="py-3 px-4 font-bold text-emerald-700 font-mono">{rx.id}</td>
+                    <td className="py-3 px-4 font-bold text-slate-900">{rx.patientName || 'Aaryan Kumar'}</td>
+                    <td className="py-3 px-4">
+                      <p className="font-bold text-slate-900">{rx.medicineName}</p>
+                      <span className="text-[10px] text-indigo-700 font-semibold">{rx.category}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <p className="font-semibold text-slate-800">{rx.dosage}</p>
+                      <p className="text-[11px] text-slate-400">{rx.frequency}</p>
+                    </td>
+                    <td className="py-3 px-4 text-slate-700">{rx.duration}</td>
+                    <td className="py-3 px-4 text-slate-500">{rx.displayDate || rx.date}</td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
-                        {rx.status}
+                        {rx.status || 'Active'}
                       </span>
                     </td>
                   </tr>
@@ -373,34 +567,45 @@ export const DoctorClinicalView = () => {
         </div>
       )}
 
-      {/* Tab 4: Diagnostic Labs */}
+      {/* ========================================================================= */}
+      {/* SUBTAB 4: PSYCHOMETRIC & DIAGNOSTIC LABS */}
+      {/* ========================================================================= */}
       {currentSubTab === 'labs' && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Psychometric & Diagnostic Laboratory Reports</h3>
-            <p className="text-xs text-slate-500">Evaluated psychological scales and biochemical profiles</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Psychometric Scales & Laboratory Diagnostics</h3>
+              <p className="text-xs text-slate-500">Review evaluated depression, anxiety, EEG, and toxicology profiles or place new orders</p>
+            </div>
+
+            <button
+              onClick={() => setIsOrderLabModalOpen(true)}
+              className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <FlaskConical className="w-3.5 h-3.5" />
+              <span>Order Diagnostic Test</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {labRecords.map(report => (
-              <div key={report.id} className="p-5 rounded-2xl border border-slate-200/80 bg-slate-50/40 space-y-3">
+            {labRecords.map(lab => (
+              <div key={lab.id} className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:shadow-xs transition space-y-2 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-md">
-                    {report.category}
+                  <span className="font-mono text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                    {lab.id}
                   </span>
-                  <span className="text-xs text-slate-400">{report.displayDate}</span>
+                  <span className="text-[10px] text-slate-400">{lab.displayDate || lab.date}</span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">{report.testName}</h4>
-                  <p className="text-xs text-slate-500">{report.id} • Ref: {report.referringDoctor}</p>
+                  <h4 className="font-bold text-slate-900 text-sm">{lab.testName}</h4>
+                  <p className="text-[11px] text-slate-500">{lab.category} • Ordered for: <strong>{lab.patientName || 'Aaryan Kumar'}</strong></p>
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-slate-200/60 text-xs">
-                  <p className="font-semibold text-slate-700">Diagnostic Finding:</p>
-                  <p className="text-slate-600 mt-0.5">{report.summary}</p>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                  <span>Sign-off: {report.pathologist}</span>
-                  <span className="font-bold text-emerald-600">✓ Validated</span>
+                <div className="p-2.5 rounded-xl bg-white border border-slate-200/60">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-slate-500">Score / Assessment:</span>
+                    <span className="font-bold text-teal-800">{lab.score}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 italic">"{lab.interpretation}"</p>
                 </div>
               </div>
             ))}
@@ -408,182 +613,223 @@ export const DoctorClinicalView = () => {
         </div>
       )}
 
-      {/* Tab 5: Speciality & OPD Details */}
-      {currentSubTab === 'speciality' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
-          <div className="flex items-center justify-between">
+      {/* ========================================================================= */}
+      {/* SUBTAB 5: PATIENT HEALTH RISK ALERTS & CONTINUOUS MONITORING */}
+      {/* ========================================================================= */}
+      {currentSubTab === 'alerts' && (
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Clinical Profile & Departmental Information</h3>
-              <p className="text-xs text-slate-500">Public clinical directory details visible to patients</p>
+              <h3 className="text-base font-bold text-slate-900">Patient Risk Monitoring & Triage Alerts</h3>
+              <p className="text-xs text-slate-500">Continuous clinical safety surveillance for suicide risk, adverse drug effects, and non-adherence</p>
             </div>
+
             <button
-              onClick={() => setIsEditProfileOpen(true)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              onClick={() => setIsRiskModalOpen(true)}
+              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>Edit Credentials</span>
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Flag / Update Clinical Alert</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Doctor Name & Title</label>
-                <p className="text-sm font-bold text-slate-900 mt-0.5">{doctorProfile.fullName} ({doctorProfile.title})</p>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Academic Qualifications</label>
-                <p className="text-sm text-slate-800 mt-0.5">{doctorProfile.qualifications}</p>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Department</label>
-                <p className="text-sm text-slate-800 mt-0.5">{doctorProfile.department}</p>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Consultation Room</label>
-                <p className="text-sm text-slate-800 mt-0.5">{doctorProfile.opdRoom}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Consulting Hours</label>
-                <p className="text-sm font-bold text-slate-900 mt-0.5">{doctorProfile.schedule}</p>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Standard Consultation Fee</label>
-                <p className="text-sm font-bold text-indigo-600 mt-0.5">₹{doctorProfile.consultationFee} per session</p>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Speciality Focus Areas</label>
-                <div className="flex flex-wrap gap-1.5 mt-1.5">
-                  {doctorProfile.specialities.map((s, i) => (
-                    <span key={i} className="px-2.5 py-1 text-[11px] font-medium bg-slate-100 text-slate-700 rounded-lg border border-slate-200/60">
-                      {s}
+          <div className="space-y-3">
+            {patientRiskAlerts.map(alert => (
+              <div 
+                key={alert.id} 
+                className={`p-4 rounded-2xl border transition ${
+                  alert.riskLevel === 'High' ? 'bg-rose-50/60 border-rose-200' :
+                  alert.riskLevel === 'Moderate' ? 'bg-amber-50/60 border-amber-200' :
+                  'bg-slate-50/80 border-slate-200'
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-black/5">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      alert.riskLevel === 'High' ? 'bg-rose-600 text-white' :
+                      alert.riskLevel === 'Moderate' ? 'bg-amber-600 text-white' :
+                      'bg-emerald-600 text-white'
+                    }`}>
+                      {alert.riskLevel} Risk
                     </span>
-                  ))}
+                    <h4 className="font-bold text-slate-900 text-sm">{alert.patientName} ({alert.patientId})</h4>
+                  </div>
+                  <span className="text-[11px] text-slate-500">Evaluated: {alert.lastEvaluated} by {alert.evaluatedBy}</span>
+                </div>
+
+                <div className="mt-2 space-y-1 text-xs">
+                  <p className="font-semibold text-slate-800">{alert.alertType}</p>
+                  <p className="text-slate-600">{alert.summary}</p>
+                  <div className="mt-2 p-2.5 rounded-xl bg-white/80 border border-black/5">
+                    <span className="font-bold text-slate-700">Clinical Protocol / Action Plan: </span>
+                    <span className="text-slate-600">{alert.actionPlan}</span>
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-400">Biography</label>
-                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{doctorProfile.bio}</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Modal 1: Write Prescription */}
+      {/* ========================================================================= */}
+      {/* SUBTAB 6: DOCTOR SPECIALITY & CLINICAL INFORMATION */}
+      {/* ========================================================================= */}
+      {currentSubTab === 'speciality' && (
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Physician Credentials & Consultation Speciality</h3>
+              <p className="text-xs text-slate-500">Manage board qualifications, consultation timings, clinical fee, and biography</p>
+            </div>
+            <button
+              onClick={() => setIsEditProfileOpen(true)}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Speciality Info</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-2">
+              <p className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">Specialist Designations</p>
+              <p className="text-sm font-bold text-slate-900">{doctorProfile?.fullName}</p>
+              <p className="text-emerald-700 font-semibold">{doctorProfile?.title}</p>
+              <p className="text-slate-600">{doctorProfile?.qualifications}</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-2">
+              <p className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">Practice Details</p>
+              <p className="text-slate-800">OPD Location: <strong>{doctorProfile?.opdRoom}</strong></p>
+              <p className="text-slate-800">Consultation Fee: <strong>₹{doctorProfile?.consultationFee}</strong></p>
+              <p className="text-slate-600">{doctorProfile?.schedule}</p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1 text-xs">
+            <p className="font-bold uppercase tracking-wider text-slate-400 text-[10px]">Clinical Biography & Philosophy</p>
+            <p className="text-slate-700 leading-relaxed">{doctorProfile?.bio}</p>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: WRITE E-PRESCRIBING (E-RX) */}
+      {/* ========================================================================= */}
       {isRxModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-                  <Pill className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Write Electronic Prescription</h3>
-                  <p className="text-xs text-slate-500">Patient: {patientProfile.fullName} ({patientProfile.id})</p>
-                </div>
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Pill className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-900">Sign & Issue e-Prescription (e-Rx)</h3>
               </div>
               <button 
                 onClick={() => setIsRxModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 font-bold"
               >
-                <X className="w-5 h-5" />
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreatePrescription} className="mt-4 space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleCreatePrescription} className="mt-4 space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Medicine / Molecule Name *</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Patient Name *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Sertraline HCl"
-                    value={rxForm.medicineName}
-                    onChange={(e) => setRxForm({ ...rxForm, medicineName: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    value={rxForm.patientName}
+                    onChange={(e) => setRxForm({ ...rxForm, patientName: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Therapeutic Category</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Drug Category</label>
                   <select
                     value={rxForm.category}
                     onChange={(e) => setRxForm({ ...rxForm, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden bg-white"
                   >
-                    <option value="Antidepressant">Antidepressant (SSRI/SNRI)</option>
-                    <option value="Anxiolytic">Anxiolytic / Benzodiazepine</option>
+                    <option value="Antidepressant (SSRI)">Antidepressant (SSRI)</option>
+                    <option value="Antidepressant (SNRI)">Antidepressant (SNRI)</option>
                     <option value="Mood Stabilizer">Mood Stabilizer</option>
-                    <option value="Antipsychotic">Atypical Antipsychotic</option>
-                    <option value="Sleep Aid">Sedative / Hypnotic</option>
+                    <option value="Anxiolytic / Benzodiazepine">Anxiolytic / Benzodiazepine</option>
+                    <option value="Atypical Antipsychotic">Atypical Antipsychotic</option>
+                    <option value="Hypnotic / Sleep Restorative">Hypnotic / Sleep Restorative</option>
                   </select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Medication Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sertraline Hydrochloride"
+                    value={rxForm.medicineName}
+                    onChange={(e) => setRxForm({ ...rxForm, medicineName: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                  />
+                </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Dosage *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 50 mg"
+                    placeholder="e.g. 50mg"
                     value={rxForm.dosage}
                     onChange={(e) => setRxForm({ ...rxForm, dosage: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Frequency</label>
-                  <select
+                  <input
+                    type="text"
                     value={rxForm.frequency}
                     onChange={(e) => setRxForm({ ...rxForm, frequency: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
-                  >
-                    <option value="Once Daily (Morning after food)">Once Daily (Morning)</option>
-                    <option value="Once Daily (Bedtime)">Once Daily (Bedtime)</option>
-                    <option value="Twice Daily (Morning & Evening)">Twice Daily (BD)</option>
-                    <option value="As Needed for Acute Anxiety (SOS)">As Needed (SOS)</option>
-                  </select>
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                  />
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Course Duration</label>
                   <input
                     type="text"
-                    placeholder="e.g. 30 Days"
                     value={rxForm.duration}
                     onChange={(e) => setRxForm({ ...rxForm, duration: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Patient Instructions</label>
+                <label className="block font-semibold text-slate-700 mb-1">Special Clinical Instructions</label>
                 <textarea
                   rows={2}
                   value={rxForm.instructions}
                   onChange={(e) => setRxForm({ ...rxForm, instructions: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsRxModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition cursor-pointer font-semibold"
+                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
                 >
-                  Sign & Issue Prescription
+                  Sign & Issue e-Rx
                 </button>
               </div>
             </form>
@@ -591,115 +837,265 @@ export const DoctorClinicalView = () => {
         </div>
       )}
 
-      {/* Modal 2: Edit Doctor Profile */}
-      {isEditProfileOpen && (
+      {/* ========================================================================= */}
+      {/* MODAL 2: ORDER LAB / PSYCHOMETRIC TEST */}
+      {/* ========================================================================= */}
+      {isOrderLabModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-                  <Edit3 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Update Doctor Speciality & Information</h3>
-                  <p className="text-xs text-slate-500">Edit clinical details published across MHC-PMS</p>
-                </div>
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <FlaskConical className="w-5 h-5 text-teal-600" />
+                <h3 className="text-base font-bold text-slate-900">Order Diagnostic / Psychometric Test</h3>
               </div>
-              <button 
-                onClick={() => setIsEditProfileOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setIsOrderLabModalOpen(false)} className="text-slate-400 font-bold">✕</button>
             </div>
 
-            <form onSubmit={handleUpdateProfile} className="mt-4 space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleOrderLab} className="mt-4 space-y-3">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Select Patient *</label>
+                <input
+                  type="text"
+                  required
+                  value={labOrderForm.patientName}
+                  onChange={(e) => setLabOrderForm({ ...labOrderForm, patientName: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Diagnostic Test / Scale *</label>
+                <select
+                  value={labOrderForm.testName}
+                  onChange={(e) => setLabOrderForm({ ...labOrderForm, testName: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-600 focus:outline-hidden bg-white"
+                >
+                  <option value="PHQ-9 (Patient Health Questionnaire - 9 Item)">PHQ-9 Depression Scale</option>
+                  <option value="GAD-7 (Generalized Anxiety Disorder 7-Item)">GAD-7 Anxiety Scale</option>
+                  <option value="BDI-II (Beck Depression Inventory)">BDI-II (Beck Depression Inventory)</option>
+                  <option value="Serum Lithium Level Assay">Serum Lithium Level Assay</option>
+                  <option value="Comprehensive Thyroid Panel (TSH/FT3/FT4)">Comprehensive Thyroid Panel</option>
+                  <option value="Quantitative EEG (qEEG) Brain Mapping">Quantitative EEG Brain Mapping</option>
+                  <option value="Brain Magnetic Resonance Imaging (MRI)">Brain MRI (Volumetric Analysis)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Clinical Rationale & Instructions</label>
+                <textarea
+                  rows={2}
+                  value={labOrderForm.clinicalRationale}
+                  onChange={(e) => setLabOrderForm({ ...labOrderForm, clinicalRationale: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsOrderLabModalOpen(false)}
+                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-xs"
+                >
+                  Confirm Lab Order
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 3: CLINICAL RISK ALERT UPDATE */}
+      {/* ========================================================================= */}
+      {isRiskModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
+                <h3 className="text-base font-bold text-slate-900">Flag / Update Health Risk Alert</h3>
+              </div>
+              <button onClick={() => setIsRiskModalOpen(false)} className="text-slate-400 font-bold">✕</button>
+            </div>
+
+            <form onSubmit={handleSaveRiskAlert} className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Patient Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={riskForm.patientName}
+                    onChange={(e) => setRiskForm({ ...riskForm, patientName: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-600 focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Risk Severity Level *</label>
+                  <select
+                    value={riskForm.riskLevel}
+                    onChange={(e) => setRiskForm({ ...riskForm, riskLevel: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-600 focus:outline-hidden bg-white font-bold"
+                  >
+                    <option value="Low">Low Risk</option>
+                    <option value="Moderate">Moderate Risk</option>
+                    <option value="High">High / Critical Risk</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Alert Classification *</label>
+                <select
+                  value={riskForm.alertType}
+                  onChange={(e) => setRiskForm({ ...riskForm, alertType: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-600 focus:outline-hidden bg-white"
+                >
+                  <option value="Suicide / Self-Harm Risk Flag">Suicide / Self-Harm Risk Flag</option>
+                  <option value="Medication Non-Adherence & Relapse">Medication Non-Adherence & Relapse</option>
+                  <option value="Adverse Drug Reaction / Toxicity">Adverse Drug Reaction / Toxicity</option>
+                  <option value="Acute Panic / Agoraphobia Crisis">Acute Panic / Agoraphobia Crisis</option>
+                  <option value="Substance Induced Agitation">Substance Induced Agitation</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Clinical Observation *</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={riskForm.summary}
+                  onChange={(e) => setRiskForm({ ...riskForm, summary: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Clinical Intervention Protocol</label>
+                <textarea
+                  rows={2}
+                  value={riskForm.actionPlan}
+                  onChange={(e) => setRiskForm({ ...riskForm, actionPlan: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsRiskModalOpen(false)}
+                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs"
+                >
+                  Save Alert Flag
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: EDIT DOCTOR PROFILE & SPECIALITY */}
+      {/* ========================================================================= */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-900">Edit Speciality & Clinical Information</h3>
+              </div>
+              <button onClick={() => setIsEditProfileOpen(false)} className="text-slate-400 font-bold">✕</button>
+            </div>
+
+            <form onSubmit={handleUpdateProfile} className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
                   <input
                     type="text"
                     value={profileForm.fullName}
                     onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Clinical Title</label>
+                  <label className="block font-semibold text-slate-700 mb-1">Speciality Title</label>
                   <input
                     type="text"
                     value={profileForm.title}
                     onChange={(e) => setProfileForm({ ...profileForm, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Qualifications</label>
-                  <input
-                    type="text"
-                    value={profileForm.qualifications}
-                    onChange={(e) => setProfileForm({ ...profileForm, qualifications: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Consultation Fee (₹)</label>
                   <input
                     type="number"
                     value={profileForm.consultationFee}
                     onChange={(e) => setProfileForm({ ...profileForm, consultationFee: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Consultation Room</label>
+                  <label className="block font-semibold text-slate-700 mb-1">OPD Location Room</label>
                   <input
                     type="text"
                     value={profileForm.opdRoom}
                     onChange={(e) => setProfileForm({ ...profileForm, opdRoom: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Consulting Hours</label>
-                  <input
-                    type="text"
-                    value={profileForm.schedule}
-                    onChange={(e) => setProfileForm({ ...profileForm, schedule: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Professional Bio</label>
+                <label className="block font-semibold text-slate-700 mb-1">Medical Degrees & Qualifications</label>
+                <input
+                  type="text"
+                  value={profileForm.qualifications}
+                  onChange={(e) => setProfileForm({ ...profileForm, qualifications: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Clinical Biography</label>
                 <textarea
                   rows={3}
                   value={profileForm.bio}
                   onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsEditProfileOpen(false)}
-                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition cursor-pointer font-semibold"
+                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
                 >
-                  Save Changes
+                  Save Profile Changes
                 </button>
               </div>
             </form>

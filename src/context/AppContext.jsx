@@ -16,6 +16,252 @@ import {
 
 const AppContext = createContext();
 
+// Initial comprehensive patient registry for Receptionist & Doctor
+export const initialPatientRecordsList = [
+  {
+    id: "PT-88204",
+    fullName: "Aaryan Kumar",
+    dob: "2005-04-14",
+    age: 21,
+    gender: "Male",
+    bloodGroup: "A+",
+    phone: "+91 98765 43210",
+    email: "aaryan.kumar@example.com",
+    address: "Indiranagar, Bengaluru, KA",
+    emergencyContact: "Sunita Kumar (Parent) - +91 98765 12345",
+    assignedDoctor: "Dr. Shashank Pandey",
+    primaryDiagnosis: "Generalized Anxiety Disorder (GAD)",
+    severity: "Mild to Moderate",
+    clinicNode: "Central Hospital OPD",
+    registeredDate: "2025-05-12",
+    insuranceProvider: "Star Health Care",
+    activeStatus: "Active Outpatient"
+  },
+  {
+    id: "PT-88205",
+    fullName: "Sneha Patel",
+    dob: "2000-08-22",
+    age: 26,
+    gender: "Female",
+    bloodGroup: "B+",
+    phone: "+91 98451 22334",
+    email: "sneha.patel@example.com",
+    address: "Whitefield, Bengaluru, KA",
+    emergencyContact: "Manoj Patel (Brother) - +91 98451 22330",
+    assignedDoctor: "Dr. Rajesh Verma",
+    primaryDiagnosis: "Major Depressive Disorder (Moderate)",
+    severity: "Moderate",
+    clinicNode: "South Specialty Centre",
+    registeredDate: "2025-06-18",
+    insuranceProvider: "HDFC ERGO Health",
+    activeStatus: "Active Outpatient"
+  },
+  {
+    id: "PT-88207",
+    fullName: "Kunal Ghosh",
+    dob: "1995-11-03",
+    age: 31,
+    gender: "Male",
+    bloodGroup: "O+",
+    phone: "+91 97112 55667",
+    email: "kunal.ghosh@example.com",
+    address: "Koramangala, Bengaluru, KA",
+    emergencyContact: "Rina Ghosh (Spouse) - +91 97112 55660",
+    assignedDoctor: "Dr. Kabir Sengupta",
+    primaryDiagnosis: "Bipolar Affective Disorder (Type II)",
+    severity: "Guarded / Monitoring",
+    clinicNode: "Central Hospital OPD",
+    registeredDate: "2025-07-20",
+    insuranceProvider: "ICICI Lombard",
+    activeStatus: "Active Clinical Watch"
+  },
+  {
+    id: "PT-88208",
+    fullName: "Deepa Nair",
+    dob: "1997-03-19",
+    age: 29,
+    gender: "Female",
+    bloodGroup: "AB+",
+    phone: "+91 96220 88990",
+    email: "deepa.nair@example.com",
+    address: "Sector 14, West Hub, Bengaluru",
+    emergencyContact: "Gopinath Nair (Father) - +91 96220 88999",
+    assignedDoctor: "Dr. Shashank Pandey",
+    primaryDiagnosis: "Adult Attention Deficit Disorder (ADHD)",
+    severity: "Mild",
+    clinicNode: "West Community Clinic",
+    registeredDate: "2025-08-14",
+    insuranceProvider: "Max Bupa Health",
+    activeStatus: "Active Outpatient"
+  },
+  {
+    id: "PT-88210",
+    fullName: "Karan Johar",
+    dob: "2007-09-05",
+    age: 19,
+    gender: "Male",
+    bloodGroup: "B-",
+    phone: "+91 95331 44556",
+    email: "karan.johar@example.com",
+    address: "Jayanagar, Bengaluru, KA",
+    emergencyContact: "Sunita Johar (Mother) - +91 95331 44550",
+    assignedDoctor: "Dr. Rajesh Verma",
+    primaryDiagnosis: "Panic Disorder with Agoraphobia",
+    severity: "Moderate to Severe",
+    clinicNode: "Central Hospital OPD",
+    registeredDate: "2025-09-01",
+    insuranceProvider: "Care Health Insurance",
+    activeStatus: "In Triage / Urgent"
+  },
+  {
+    id: "PT-88212",
+    fullName: "Anita Roy",
+    dob: "1992-12-30",
+    age: 34,
+    gender: "Female",
+    bloodGroup: "A-",
+    phone: "+91 94220 33445",
+    email: "anita.roy@example.com",
+    address: "Civil Lines, North Wing, Bengaluru",
+    emergencyContact: "Alok Roy (Spouse) - +91 94220 33440",
+    assignedDoctor: "Dr. Meera Nambiar",
+    primaryDiagnosis: "Post-Traumatic Stress Disorder (PTSD)",
+    severity: "Moderate",
+    clinicNode: "North Specialty Satellite",
+    registeredDate: "2025-09-10",
+    insuranceProvider: "Star Health Care",
+    activeStatus: "Active Psychotherapy"
+  }
+];
+
+// Initial Counselling Sessions
+export const initialCounsellingSessions = [
+  {
+    sessionId: "CNS-2026-701",
+    patientId: "PT-88204",
+    patientName: "Aaryan Kumar",
+    therapistName: "Dr. Kabir Sengupta",
+    therapistRole: "Clinical Psychologist & CBT Specialist",
+    therapyType: "Cognitive Behavioral Therapy (CBT)",
+    date: "2026-09-21",
+    displayDate: "21 Sep 2026",
+    time: "11:30 AM",
+    duration: "45 Minutes",
+    format: "In-Person Clinic Suite #4",
+    status: "Confirmed",
+    clinicalObjective: "Cognitive restructuring for academic somatic tension and cognitive thought records.",
+    allottedBy: "Medha Banerjee (Receptionist)",
+    allottedDate: "2026-09-16"
+  },
+  {
+    sessionId: "CNS-2026-702",
+    patientId: "PT-88205",
+    patientName: "Sneha Patel",
+    therapistName: "Dr. Rajesh Verma",
+    therapistRole: "Consultant Psychotherapist",
+    therapyType: "Behavioral Activation Therapy (BAT)",
+    date: "2026-09-23",
+    displayDate: "23 Sep 2026",
+    time: "02:00 PM",
+    duration: "60 Minutes",
+    format: "Tele-Therapy Secure Room #2",
+    status: "Confirmed",
+    clinicalObjective: "Graded activity scheduling and pleasure/mastery ratings for depressive inertia.",
+    allottedBy: "Medha Banerjee (Receptionist)",
+    allottedDate: "2026-09-15"
+  },
+  {
+    sessionId: "CNS-2026-703",
+    patientId: "PT-88212",
+    patientName: "Anita Roy",
+    therapistName: "Dr. Meera Nambiar",
+    therapistRole: "Trauma Specialist & EMDR Clinician",
+    therapyType: "Trauma-Informed Psychotherapy & EMDR",
+    date: "2026-09-25",
+    displayDate: "25 Sep 2026",
+    time: "04:15 PM",
+    duration: "60 Minutes",
+    format: "In-Person Calm Suite #1",
+    status: "Scheduled",
+    clinicalObjective: "Grounding techniques, dual-attention bilateral stimulation, resource installation.",
+    allottedBy: "Medha Banerjee (Receptionist)",
+    allottedDate: "2026-09-16"
+  }
+];
+
+// Initial Health Risk Alerts for Clinical Monitoring
+export const initialRiskAlerts = [
+  {
+    id: "RISK-101",
+    patientId: "PT-88204",
+    patientName: "Aaryan Kumar",
+    riskLevel: "Low",
+    alertType: "Routine Affective Review",
+    summary: "Mild somatic tension; no active or passive self-harm ideation reported.",
+    lastEvaluated: "18 Sep 2026",
+    evaluatedBy: "Dr. Shashank Pandey",
+    actionPlan: "Continue current SSRI dosage; review sleep log in 14 days."
+  },
+  {
+    id: "RISK-102",
+    patientId: "PT-88207",
+    patientName: "Kunal Ghosh",
+    riskLevel: "High",
+    alertType: "Medication Non-Adherence & Hypomanic Shift",
+    summary: "Patient missed 4 consecutive lithium carbonate doses; family reports elevated psychomotor agitation.",
+    lastEvaluated: "17 Sep 2026",
+    evaluatedBy: "Dr. Kabir Sengupta",
+    actionPlan: "Mandatory urgent serum lithium toxicology assay; caregiver contact initiated."
+  },
+  {
+    id: "RISK-103",
+    patientId: "PT-88210",
+    patientName: "Karan Johar",
+    riskLevel: "Moderate",
+    alertType: "Acute Panic Exacerbation",
+    summary: "Severe anticipatory panic attacks requiring emergency OPD stabilization.",
+    lastEvaluated: "16 Sep 2026",
+    evaluatedBy: "Dr. Rajesh Verma",
+    actionPlan: "Short-course low-dose clonazepam bridging with CBT exposure therapy."
+  }
+];
+
+// Initial System Audit Logs for System Admin
+export const initialAuditLogs = [
+  {
+    id: "AUDIT-901",
+    timestamp: "2026-09-18 10:14:22",
+    user: "Shounak Sarkar (System Admin)",
+    eventType: "Database Synchronization",
+    details: "Automated incremental replication triggered between Central Hub and North Satellite.",
+    severity: "Info"
+  },
+  {
+    id: "AUDIT-902",
+    timestamp: "2026-09-18 09:45:10",
+    user: "Medha Banerjee (Receptionist)",
+    eventType: "Patient Record Creation",
+    details: "Registered new patient profile PT-88212 (Anita Roy) into Outpatient Registry.",
+    severity: "Info"
+  },
+  {
+    id: "AUDIT-903",
+    timestamp: "2026-09-18 09:12:05",
+    user: "Dr. Shashank Pandey (Doctor)",
+    eventType: "e-Prescription Signed",
+    details: "Issued e-Rx RX-2026-441 (Sertraline HCl 50mg) for PT-88204 under DISHA compliance.",
+    severity: "Info"
+  },
+  {
+    id: "AUDIT-904",
+    timestamp: "2026-09-17 18:30:00",
+    user: "Shounak Sarkar (System Admin)",
+    eventType: "Account Lifecycle Event",
+    details: "Deactivated dormant account REC-105 (Rohan Kulkarni) following security review.",
+    severity: "Warning"
+  }
+];
+
 export const AppProvider = ({ children }) => {
   // Current active role: 'admin' | 'receptionist' | 'doctor' | 'patient'
   const [currentRole, setCurrentRole] = useState(() => {
@@ -26,7 +272,13 @@ export const AppProvider = ({ children }) => {
   // Auth state - starts unauthenticated on fresh open so login screen is presented first
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Patient profile
+  // Switch profile notice state
+  const [switchNotice, setSwitchNotice] = useState('');
+
+  // Toast notification
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  // Patient profile (for patient portal)
   const [patientProfile, setPatientProfile] = useState(() => {
     const saved = localStorage.getItem('mhc_patient_profile');
     if (saved) {
@@ -50,6 +302,30 @@ export const AppProvider = ({ children }) => {
       return { ...mockStaffProfiles, ...parsed };
     }
     return mockStaffProfiles;
+  });
+
+  // Comprehensive patient records registry (Receptionist & Doctor)
+  const [patientRecordsList, setPatientRecordsList] = useState(() => {
+    const saved = localStorage.getItem('mhc_patient_records_list');
+    return saved ? JSON.parse(saved) : initialPatientRecordsList;
+  });
+
+  // Counselling sessions registry (Receptionist Allotment & Doctor Therapy)
+  const [counsellingSessions, setCounsellingSessions] = useState(() => {
+    const saved = localStorage.getItem('mhc_counselling_sessions');
+    return saved ? JSON.parse(saved) : initialCounsellingSessions;
+  });
+
+  // Clinical risk alerts (Continuous Patient Monitoring)
+  const [patientRiskAlerts, setPatientRiskAlerts] = useState(() => {
+    const saved = localStorage.getItem('mhc_risk_alerts');
+    return saved ? JSON.parse(saved) : initialRiskAlerts;
+  });
+
+  // System audit logs (System Admin)
+  const [systemAuditLogs, setSystemAuditLogs] = useState(() => {
+    const saved = localStorage.getItem('mhc_audit_logs');
+    return saved ? JSON.parse(saved) : initialAuditLogs;
   });
 
   // User accounts registry for Admin management
@@ -101,10 +377,15 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : mockPrescriptions;
   });
 
+  // Diagnostic Lab records
+  const [labRecords, setLabRecords] = useState(() => {
+    const saved = localStorage.getItem('mhc_lab_records');
+    return saved ? JSON.parse(saved) : mockLabRecords;
+  });
+
   // Doctors & records
   const [doctors, setDoctors] = useState(mockDoctors);
   const [medicalRecords] = useState(mockMedicalRecords);
-  const [labRecords] = useState(mockLabRecords);
   const [adminReports] = useState(mockAdminReports);
 
   // Sidebar collapse toggle state
@@ -117,12 +398,6 @@ export const AppProvider = ({ children }) => {
   const [preselectedDoctorId, setPreselectedDoctorId] = useState(null);
   const [slotToBook, setSlotToBook] = useState(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-
-  // Switch profile notice state
-  const [switchNotice, setSwitchNotice] = useState('');
-
-  // Toast notification
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   // Sync state to localStorage
   useEffect(() => {
@@ -140,6 +415,22 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('mhc_staff_profiles', JSON.stringify(staffProfiles));
   }, [staffProfiles]);
+
+  useEffect(() => {
+    localStorage.setItem('mhc_patient_records_list', JSON.stringify(patientRecordsList));
+  }, [patientRecordsList]);
+
+  useEffect(() => {
+    localStorage.setItem('mhc_counselling_sessions', JSON.stringify(counsellingSessions));
+  }, [counsellingSessions]);
+
+  useEffect(() => {
+    localStorage.setItem('mhc_risk_alerts', JSON.stringify(patientRiskAlerts));
+  }, [patientRiskAlerts]);
+
+  useEffect(() => {
+    localStorage.setItem('mhc_audit_logs', JSON.stringify(systemAuditLogs));
+  }, [systemAuditLogs]);
 
   useEffect(() => {
     localStorage.setItem('mhc_user_accounts', JSON.stringify(userAccounts));
@@ -169,11 +460,28 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('mhc_prescriptions', JSON.stringify(prescriptions));
   }, [prescriptions]);
 
+  useEffect(() => {
+    localStorage.setItem('mhc_lab_records', JSON.stringify(labRecords));
+  }, [labRecords]);
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => {
       setToast({ show: false, message: '', type: 'success' });
     }, 4000);
+  };
+
+  // Log system audit event
+  const logSystemEvent = (eventType, details, severity = 'Info') => {
+    const newLog = {
+      id: `AUDIT-${Math.floor(1000 + Math.random() * 9000)}`,
+      timestamp: new Date().toLocaleString(),
+      user: `${currentUser?.fullName || currentUser?.name || 'System User'} (${currentRole})`,
+      eventType,
+      details,
+      severity
+    };
+    setSystemAuditLogs(prev => [newLog, ...prev]);
   };
 
   // Switch role with mandatory logout and credential re-prompt
@@ -203,7 +511,7 @@ export const AppProvider = ({ children }) => {
     showToast(notice, 'info');
   };
 
-  // Role Switcher
+  // Role Switcher without logout (internal utility)
   const switchRole = (newRole) => {
     const norm = newRole.toLowerCase().replace('system ', '').trim();
     const actualRole = norm === 'admin' ? 'admin' 
@@ -313,6 +621,7 @@ export const AppProvider = ({ children }) => {
     setActiveTab(targetRule.defaultTab);
     const welcomeName = registeredAccount ? registeredAccount.name : targetRule.getName();
     showToast(`Welcome back, ${welcomeName}! Signed in as ${targetRule.title}.`);
+    logSystemEvent('User Login', `User authenticated as ${targetRule.title} (${welcomeName})`);
     return { success: true };
   };
 
@@ -337,6 +646,27 @@ export const AppProvider = ({ children }) => {
     };
     setPatientProfile(newProfile);
 
+    // Add to patient records registry
+    setPatientRecordsList(prev => [{
+      id: newId,
+      fullName: patientData.fullName,
+      dob: '2002-01-01',
+      age: Number(patientData.age) || 24,
+      gender: patientData.gender || 'Not specified',
+      bloodGroup: patientData.bloodGroup || 'B+',
+      phone: patientData.phone || '+91 98765 43210',
+      email: patientData.email,
+      address: 'Bengaluru, KA',
+      emergencyContact: 'Self / Next of Kin',
+      assignedDoctor: 'Dr. Shashank Pandey',
+      primaryDiagnosis: 'Intake Evaluation Pending',
+      severity: 'Mild',
+      clinicNode: 'Central Hospital OPD',
+      registeredDate: new Date().toISOString().split('T')[0],
+      insuranceProvider: 'Self Pay / General Outpatient',
+      activeStatus: 'Active Outpatient'
+    }, ...prev]);
+
     // Add to user accounts registry
     setUserAccounts(prev => [{
       id: newId,
@@ -351,6 +681,48 @@ export const AppProvider = ({ children }) => {
 
     showToast(`Account registered successfully! Welcome, ${patientData.fullName}. You can now sign in as Patient.`);
     return { success: true, id: newId, email: patientData.email };
+  };
+
+  // Receptionist & Doctor: Create and Add Patient Record
+  const addPatientRecord = (patientData) => {
+    const newId = `PT-${Math.floor(88300 + Math.random() * 699)}`;
+    const newRecord = {
+      id: newId,
+      fullName: patientData.fullName,
+      dob: patientData.dob || '1998-01-01',
+      age: Number(patientData.age) || 25,
+      gender: patientData.gender || 'Male',
+      bloodGroup: patientData.bloodGroup || 'B+',
+      phone: patientData.phone || '+91 98000 11111',
+      email: patientData.email || `${patientData.fullName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      address: patientData.address || 'Bengaluru, Karnataka',
+      emergencyContact: patientData.emergencyContact || 'Family Contact - +91 98000 22222',
+      assignedDoctor: patientData.assignedDoctor || 'Dr. Shashank Pandey',
+      primaryDiagnosis: patientData.primaryDiagnosis || 'Initial Psychiatric Intake',
+      severity: patientData.severity || 'Moderate',
+      clinicNode: patientData.clinicNode || 'Central Hospital OPD',
+      registeredDate: new Date().toISOString().split('T')[0],
+      insuranceProvider: patientData.insuranceProvider || 'Self-Sponsored Outpatient',
+      activeStatus: 'Active Outpatient'
+    };
+
+    setPatientRecordsList(prev => [newRecord, ...prev]);
+
+    // Also register in user accounts
+    setUserAccounts(prev => [{
+      id: newId,
+      name: patientData.fullName,
+      email: newRecord.email,
+      role: 'Patient',
+      status: 'Active',
+      registeredDate: new Date().toISOString().split('T')[0],
+      lastLogin: 'Never',
+      clinicNode: newRecord.clinicNode
+    }, ...prev]);
+
+    showToast(`Electronic Patient Record created for ${newRecord.fullName} (ID: ${newId})`);
+    logSystemEvent('Patient Record Created', `New patient record registered: ${newRecord.fullName} (${newId})`);
+    return newRecord;
   };
 
   // Add User Account (Admin)
@@ -401,10 +773,11 @@ export const AppProvider = ({ children }) => {
     }
 
     showToast(`New ${newAccount.role} account created successfully for ${newAccount.name}! (ID: ${newId})`);
+    logSystemEvent('User Account Created', `Admin registered account for ${newAccount.name} (${newAccount.role})`);
     return fullAccount;
   };
 
-  // Appointments
+  // Appointments - Book
   const bookNewAppointment = (appointmentData) => {
     const newId = `APT-${Math.floor(1000 + Math.random() * 9000)}`;
     const newAppointment = {
@@ -419,6 +792,28 @@ export const AppProvider = ({ children }) => {
     return newAppointment;
   };
 
+  // Appointments - Reschedule
+  const rescheduleAppointment = (appointmentId, newDate, newTime, newSlotPeriod = 'Morning', reason = 'Rescheduled by Reception') => {
+    setAppointments(prev => prev.map(apt => {
+      if (apt.id === appointmentId) {
+        const updated = {
+          ...apt,
+          date: newDate,
+          time: newTime,
+          slotPeriod: newSlotPeriod,
+          displayDate: new Date(newDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+          status: 'Upcoming',
+          rescheduledAt: new Date().toLocaleString(),
+          rescheduleReason: reason
+        };
+        showToast(`Appointment ${appointmentId} rescheduled to ${updated.displayDate} at ${newTime}.`);
+        return updated;
+      }
+      return apt;
+    }));
+  };
+
+  // Appointments - Cancel
   const cancelAppointment = (appointmentId, reason = 'Cancelled by Patient') => {
     setAppointments(prev => prev.map(apt => {
       if (apt.id === appointmentId) {
@@ -432,6 +827,33 @@ export const AppProvider = ({ children }) => {
       return apt;
     }));
     showToast(`Appointment ${appointmentId} has been cancelled.`, 'info');
+  };
+
+  // Receptionist: Allot Counselling Session
+  const allotCounsellingSession = (sessionData) => {
+    const newId = `CNS-2026-${Math.floor(700 + Math.random() * 299)}`;
+    const newSession = {
+      sessionId: newId,
+      status: 'Confirmed',
+      allottedBy: `${staffProfiles.receptionist?.fullName || 'Medha Banerjee'} (Receptionist)`,
+      allottedDate: new Date().toISOString().split('T')[0],
+      displayDate: new Date(sessionData.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      ...sessionData
+    };
+
+    setCounsellingSessions(prev => [newSession, ...prev]);
+    showToast(`Counselling session allotted for ${sessionData.patientName} with ${sessionData.therapistName}! (ID: ${newId})`);
+    return newSession;
+  };
+
+  const cancelCounsellingSession = (sessionId) => {
+    setCounsellingSessions(prev => prev.map(s => {
+      if (s.sessionId === sessionId) {
+        return { ...s, status: 'Cancelled' };
+      }
+      return s;
+    }));
+    showToast(`Counselling session ${sessionId} has been cancelled.`, 'info');
   };
 
   // Patient Profile updates
@@ -469,7 +891,7 @@ export const AppProvider = ({ children }) => {
     showToast('Doctor credentials & clinical information updated successfully!');
   };
 
-  // Doctor Prescriptions
+  // Doctor: Prescriptions
   const addNewPrescription = (newRxData) => {
     const newId = `RX-2026-${Math.floor(100 + Math.random() * 900)}`;
     const newRecord = {
@@ -487,12 +909,49 @@ export const AppProvider = ({ children }) => {
     return newRecord;
   };
 
+  // Doctor: Order Lab / Psychometric Test
+  const orderLabTest = (testData) => {
+    const newId = `LAB-2026-${Math.floor(800 + Math.random() * 199)}`;
+    const newLab = {
+      id: newId,
+      testName: testData.testName,
+      category: testData.category || 'Psychometric Scale',
+      orderedBy: staffProfiles.doctor.fullName,
+      patientId: testData.patientId || 'PT-88204',
+      patientName: testData.patientName || 'Aaryan Kumar',
+      date: new Date().toISOString().split('T')[0],
+      displayDate: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      status: 'Ordered / Sample Queued',
+      score: 'Pending Clinical Execution',
+      severity: testData.urgency || 'Routine',
+      interpretation: testData.clinicalRationale || 'Investigative order placed by attending clinician.'
+    };
+
+    setLabRecords(prev => [newLab, ...prev]);
+    showToast(`Diagnostic order ${newId} (${testData.testName}) placed successfully!`);
+    return newLab;
+  };
+
+  // Doctor: Update Patient Risk Alert
+  const updatePatientRiskAlert = (riskData) => {
+    const newAlert = {
+      id: `RISK-${Math.floor(200 + Math.random() * 799)}`,
+      evaluatedBy: staffProfiles.doctor.fullName,
+      lastEvaluated: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      ...riskData
+    };
+
+    setPatientRiskAlerts(prev => [newAlert, ...prev.filter(r => r.patientId !== riskData.patientId)]);
+    showToast(`Clinical risk alert updated for ${riskData.patientName} (${riskData.riskLevel} Risk)!`, riskData.riskLevel === 'High' ? 'warning' : 'success');
+  };
+
   // Admin: User Account Management (Activate / Deactivate)
   const toggleUserAccountStatus = (userId) => {
     setUserAccounts(prev => prev.map(acc => {
       if (acc.id === userId) {
         const nextStatus = acc.status === 'Active' ? 'Deactivated' : 'Active';
         showToast(`Account ${acc.id} (${acc.name}) is now ${nextStatus}.`, nextStatus === 'Active' ? 'success' : 'warning');
+        logSystemEvent('Account Status Change', `Administrator toggled ${acc.name} (${acc.id}) status to ${nextStatus}`, nextStatus === 'Active' ? 'Info' : 'Warning');
         return { ...acc, status: nextStatus };
       }
       return acc;
@@ -513,6 +972,7 @@ export const AppProvider = ({ children }) => {
       return node;
     }));
     showToast('Central and regional clinic databases synchronized successfully!');
+    logSystemEvent('Cross-Clinic Synchronization', 'All distributed nodes synchronized with central healthcare database');
   };
 
   // Admin: Broadcast Announcement
@@ -524,33 +984,36 @@ export const AppProvider = ({ children }) => {
     };
     setBroadcastNotifications(prev => [newNotif, ...prev]);
     showToast(`System notification broadcasted to ${announcement.audience}!`);
+    logSystemEvent('Broadcast Bulletin', `Dispatched broadcast notice: ${announcement.title}`);
   };
 
-  // Receptionist: Create Billing Invoice
+  // Receptionist: Create Billing Invoice & Process Payment
   const createBillingInvoice = (invoiceData) => {
     const newInvoice = {
       invoiceId: `INV-2026-${Math.floor(800 + Math.random() * 199)}`,
       receiptNumber: `REC-${Math.floor(99000 + Math.random() * 999)}`,
       date: new Date().toISOString().split('T')[0],
       status: 'Paid',
+      paymentTimestamp: new Date().toLocaleString(),
       ...invoiceData
     };
     setBillingInvoices(prev => [newInvoice, ...prev]);
-    showToast(`Payment of ₹${invoiceData.amount} recorded for ${invoiceData.patientName}! Receipt generated.`);
+    showToast(`Payment of ₹${invoiceData.amount} processed for ${invoiceData.patientName}! Receipt ${newInvoice.receiptNumber} issued.`);
     return newInvoice;
   };
 
-  // Receptionist: Check-in Visitor
+  // Receptionist: Check-in / Record Visitor Details
   const checkInVisitor = (visitorData) => {
     const newVisitor = {
       id: `VIS-${Math.floor(300 + Math.random() * 99)}`,
       tokenNumber: waitingVisitors.length + 1,
       arrivalTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      date: new Date().toISOString().split('T')[0],
       status: 'In Waiting Lounge',
       ...visitorData
     };
     setWaitingVisitors(prev => [newVisitor, ...prev]);
-    showToast(`Patient ${visitorData.patientName} checked into waiting lounge (Token #${newVisitor.tokenNumber}).`);
+    showToast(`Visitor ${visitorData.visitorName || visitorData.patientName} recorded (Token #${newVisitor.tokenNumber}).`);
     return newVisitor;
   };
 
@@ -561,7 +1024,7 @@ export const AppProvider = ({ children }) => {
       }
       return v;
     }));
-    showToast(`Visitor status updated to ${newStatus}.`);
+    showToast(`Visitor log status updated to ${newStatus}.`);
   };
 
   const navigateToCheckAvailability = (doctorId = null) => {
@@ -597,6 +1060,15 @@ export const AppProvider = ({ children }) => {
         patientProfile,
         updateProfile,
         registerPatient,
+        patientRecordsList,
+        addPatientRecord,
+        counsellingSessions,
+        allotCounsellingSession,
+        cancelCounsellingSession,
+        patientRiskAlerts,
+        updatePatientRiskAlert,
+        systemAuditLogs,
+        logSystemEvent,
         staffProfiles,
         doctorProfile: staffProfiles.doctor,
         updateDoctorProfile,
@@ -615,6 +1087,7 @@ export const AppProvider = ({ children }) => {
         broadcastAnnouncement,
         appointments,
         bookNewAppointment,
+        rescheduleAppointment,
         cancelAppointment,
         activeTab,
         setActiveTab,
@@ -631,6 +1104,7 @@ export const AppProvider = ({ children }) => {
         prescriptions,
         addNewPrescription,
         labRecords,
+        orderLabTest,
         isSidebarCollapsed,
         setIsSidebarCollapsed,
         toggleSidebar: () => setIsSidebarCollapsed(prev => !prev),
