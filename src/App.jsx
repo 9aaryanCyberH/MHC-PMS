@@ -12,10 +12,14 @@ import { PrescriptionsLabView } from './components/modules/PrescriptionsLabView'
 import { DoctorsView } from './components/modules/DoctorsView';
 import { PatientProfileView } from './components/modules/PatientProfileView';
 import { BookAppointmentModal } from './components/modules/BookAppointmentModal';
+import { DoctorClinicalView } from './components/modules/DoctorClinicalView';
+import { ReceptionistDeskView } from './components/modules/ReceptionistDeskView';
+import { AdminGovernanceView } from './components/modules/AdminGovernanceView';
 
 const MainLayout = () => {
   const { 
     isAuthenticated, 
+    currentRole,
     activeTab, 
     isBookingModalOpen, 
     setIsBookingModalOpen,
@@ -26,7 +30,7 @@ const MainLayout = () => {
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // If unauthenticated, show the confidential patient login screen
+  // If unauthenticated, show the multi-role login screen with dropdown
   if (!isAuthenticated) {
     return (
       <>
@@ -37,6 +41,29 @@ const MainLayout = () => {
   }
 
   const renderActiveModule = () => {
+    // Role-specific routing
+    if (currentRole === 'doctor') {
+      if (activeTab === 'doctors') return <DoctorsView />;
+      if (activeTab === 'records') return <PatientRecordsView />;
+      if (activeTab === 'prescriptions-lab') return <PrescriptionsLabView />;
+      if (activeTab === 'appointments') return <AppointmentsView />;
+      return <DoctorClinicalView />;
+    }
+
+    if (currentRole === 'receptionist') {
+      if (activeTab === 'doctors') return <DoctorsView />;
+      if (activeTab === 'appointments') return <AppointmentsView />;
+      if (activeTab === 'records') return <PatientRecordsView />;
+      return <ReceptionistDeskView />;
+    }
+
+    if (currentRole === 'admin') {
+      if (activeTab === 'doctors') return <DoctorsView />;
+      if (activeTab === 'records') return <PatientRecordsView />;
+      return <AdminGovernanceView />;
+    }
+
+    // Default: Patient Role
     switch (activeTab) {
       case 'dashboard':
         return <DashboardView />;
@@ -55,6 +82,19 @@ const MainLayout = () => {
         return <PatientProfileView />;
       default:
         return <DashboardView />;
+    }
+  };
+
+  const getRoleFooterLabel = () => {
+    switch (currentRole) {
+      case 'admin':
+        return 'System Administration & Governance Console • Central Database Synchronized';
+      case 'doctor':
+        return 'Attending Clinician Consultation Suite • Confidential Psychiatric Records';
+      case 'receptionist':
+        return 'Front Desk Admissions & Scheduling Terminal • Active Clinic Node';
+      default:
+        return 'Confidential Patient Health Portal • 256-Bit Encrypted Healthcare Records';
     }
   };
 
@@ -82,7 +122,7 @@ const MainLayout = () => {
               <strong>MHC-PMS</strong> — Mental Health Care Patient Management System
             </p>
             <p className="text-[11px] text-slate-400">
-              Confidential Patient Portal • 256-Bit Encrypted Healthcare Records
+              {getRoleFooterLabel()}
             </p>
           </footer>
         </div>

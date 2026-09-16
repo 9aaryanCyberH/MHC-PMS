@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { 
+  UserPlus,
   ShieldCheck, 
   Users, 
   BarChart3, 
@@ -33,12 +34,44 @@ export const AdminGovernanceView = () => {
     adminReports, 
     broadcastNotifications, 
     broadcastAnnouncement,
+    addUserAccount,
     showToast 
   } = useApp();
 
   const [currentSubTab, setCurrentSubTab] = useState('accounts');
   const [accountSearch, setAccountSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
+
+  // Add User / Doctor Modal State
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    role: 'Doctor',
+    clinicNode: 'Central Hospital OPD',
+    speciality: 'Adult Psychiatry',
+    consultationFee: 1200,
+    qualifications: 'MBBS, MD (Psychiatry)'
+  });
+
+  const handleCreateUser = (e) => {
+    e.preventDefault();
+    if (!userForm.name || !userForm.email) {
+      showToast('Please enter both name and email.', 'error');
+      return;
+    }
+    addUserAccount(userForm);
+    setIsAddUserModalOpen(false);
+    setUserForm({
+      name: '',
+      email: '',
+      role: 'Doctor',
+      clinicNode: 'Central Hospital OPD',
+      speciality: 'Adult Psychiatry',
+      consultationFee: 1200,
+      qualifications: 'MBBS, MD (Psychiatry)'
+    });
+  };
 
   // Broadcast Modal State
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
@@ -68,7 +101,7 @@ export const AdminGovernanceView = () => {
     }
     broadcastAnnouncement({
       ...broadcastForm,
-      sender: `${currentUser.fullName} (${currentUser.role})`
+      sender: `${currentUser?.fullName || currentUser?.name || 'Shounak Sarkar'} (${currentUser.role})`
     });
     setIsBroadcastModalOpen(false);
     setBroadcastForm({
@@ -99,14 +132,14 @@ export const AdminGovernanceView = () => {
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4 sm:gap-6">
             <img 
-              src={currentUser.avatar} 
-              alt={currentUser.fullName}
+              src={currentUser?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300'} 
+              alt={currentUser?.fullName || currentUser?.name || 'Administrator'}
               className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-4 ring-indigo-500/30 shadow-lg"
             />
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
-                  {currentUser.role} • {currentUser.id}
+                  {currentUser?.role || 'System Admin'} • {currentUser?.id || 'ADM-001'}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -114,13 +147,13 @@ export const AdminGovernanceView = () => {
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                {currentUser.fullName}
+                {currentUser?.fullName || currentUser?.name || 'Shounak Sarkar'}
               </h2>
               <p className="text-xs sm:text-sm text-indigo-200/80">
-                {currentUser.title}
+                {currentUser?.title || 'Healthcare Informatics & Systems Administrator'}
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                {currentUser.department} • {currentUser.accessLevel}
+                {currentUser?.department || 'IT Systems & Health Records Governance'} • {currentUser?.accessLevel || 'Level 4 Super Administrator'}
               </p>
             </div>
           </div>
@@ -224,6 +257,13 @@ export const AdminGovernanceView = () => {
                 <option value="Receptionist">Receptionists</option>
                 <option value="System Admin">Administrators</option>
               </select>
+              <button
+                onClick={() => setIsAddUserModalOpen(true)}
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Add User / Doctor</span>
+              </button>
             </div>
           </div>
 
@@ -586,6 +626,143 @@ export const AdminGovernanceView = () => {
           </div>
         </div>
       )}
+      {/* Modal: Add User Account / Doctor */}
+      {isAddUserModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Add New User Account / Doctor</h3>
+                  <p className="text-xs text-slate-500">Register credentials into the centralized MHC-PMS registry</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsAddUserModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="mt-5 space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Dr. Priya Rao"
+                    value={userForm.name}
+                    onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Official Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. priya.rao@mhc-pms.org"
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">System Role *</label>
+                  <select
+                    value={userForm.role}
+                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
+                  >
+                    <option value="Doctor">Doctor (Clinical Consultant)</option>
+                    <option value="Receptionist">Receptionist (Front Desk)</option>
+                    <option value="Patient">Patient</option>
+                    <option value="System Admin">System Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Clinic Node / Branch</label>
+                  <select
+                    value={userForm.clinicNode}
+                    onChange={(e) => setUserForm({ ...userForm, clinicNode: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
+                  >
+                    <option value="Central Hospital OPD">Central Hospital OPD</option>
+                    <option value="North Specialty Satellite">North Specialty Satellite</option>
+                    <option value="West Community Clinic">West Community Clinic</option>
+                    <option value="South Suburban Practice">South Suburban Practice</option>
+                  </select>
+                </div>
+              </div>
+
+              {userForm.role === 'Doctor' && (
+                <div className="p-3.5 bg-indigo-50/60 border border-indigo-100 rounded-2xl space-y-3">
+                  <p className="text-[11px] font-bold text-indigo-900 uppercase tracking-wider">
+                    Doctor Speciality & Credential Details
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Clinical Speciality</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Neuropsychiatry"
+                        value={userForm.speciality}
+                        onChange={(e) => setUserForm({ ...userForm, speciality: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold text-slate-700 mb-1">Consultation Fee (₹)</label>
+                      <input
+                        type="number"
+                        placeholder="1200"
+                        value={userForm.consultationFee}
+                        onChange={(e) => setUserForm({ ...userForm, consultationFee: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Qualifications / Degrees</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. MBBS, MD (Psychiatry), DNB"
+                      value={userForm.qualifications}
+                      onChange={(e) => setUserForm({ ...userForm, qualifications: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddUserModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition cursor-pointer font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition shadow-sm cursor-pointer"
+                >
+                  Create & Activate Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
