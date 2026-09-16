@@ -43,11 +43,19 @@ export const DoctorClinicalView = () => {
     patientRiskAlerts,
     updatePatientRiskAlert,
     switchRoleWithLogout,
+    activeTab,
+    setActiveTab,
     showToast
   } = useApp();
 
-  // Internal tab: 'queue' | 'patients' | 'prescriptions' | 'labs' | 'alerts' | 'speciality'
-  const [currentSubTab, setCurrentSubTab] = useState('queue');
+  // Synchronize internal subtab with sidebar activeTab
+  const currentSubTab = activeTab && activeTab.startsWith('doc-') 
+    ? activeTab.replace('doc-', '') 
+    : 'queue';
+
+  const setCurrentSubTab = (tabId) => {
+    setActiveTab('doc-' + tabId);
+  };
   const [selectedPatientId, setSelectedPatientId] = useState('PT-88204');
   const [queueStatusFilter, setQueueStatusFilter] = useState('All');
 

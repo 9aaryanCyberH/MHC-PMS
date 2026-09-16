@@ -44,11 +44,19 @@ export const AdminGovernanceView = () => {
     addUserAccount,
     systemAuditLogs,
     switchRoleWithLogout,
+    activeTab,
+    setActiveTab,
     showToast 
   } = useApp();
 
-  // Subtabs: 'accounts' | 'reports' | 'sync' | 'audit' | 'broadcasts'
-  const [currentSubTab, setCurrentSubTab] = useState('accounts');
+  // Synchronize internal subtab with sidebar activeTab
+  const currentSubTab = activeTab && activeTab.startsWith('adm-') 
+    ? activeTab.replace('adm-', '') 
+    : 'accounts';
+
+  const setCurrentSubTab = (tabId) => {
+    setActiveTab('adm-' + tabId);
+  };
   
   // Account filtering
   const [accountSearch, setAccountSearch] = useState('');

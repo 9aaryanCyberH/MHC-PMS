@@ -17,7 +17,18 @@ import {
   ShieldCheck,
   Building,
   Shield,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Clock,
+  Pill,
+  FlaskConical,
+  ShieldAlert,
+  CreditCard,
+  HeartHandshake,
+  UserCheck,
+  UserCog,
+  BarChart3,
+  RefreshCw,
+  BellRing
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -54,27 +65,25 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     switchRoleWithLogout(targetRole);
   };
 
-  // Define role-specific navigation menus
+  // Define role-specific navigation menus with explicit use case features
   const getNavSections = () => {
     if (currentRole === 'doctor') {
       return [
         {
-          title: 'CLINICAL WORKSPACE',
+          title: 'CLINICAL USE CASES',
           items: [
-            { id: 'clinical-queue', label: 'Consultation Queue & EHR', icon: Stethoscope, highlight: true },
-            { id: 'appointments', label: 'Appointments Schedule', icon: CalendarCheck, badge: upcomingCount > 0 ? upcomingCount : null }
+            { id: 'doc-queue', label: 'Consultation Queue', icon: Clock, badge: upcomingCount > 0 ? upcomingCount : null },
+            { id: 'doc-patients', label: 'Psychiatric EHR & Summaries', icon: FileText },
+            { id: 'doc-prescriptions', label: 'e-Prescribing & Treatments', icon: Pill },
+            { id: 'doc-labs', label: 'Diagnostic & Lab Scales', icon: FlaskConical },
+            { id: 'doc-alerts', label: 'Health Risk Alerts', icon: ShieldAlert, highlight: true },
+            { id: 'doc-speciality', label: 'My Speciality Profile', icon: Stethoscope }
           ]
         },
         {
-          title: 'PATIENT RECORDS & LABS',
+          title: 'HOSPITAL REGISTRIES',
           items: [
-            { id: 'records', label: 'Patient Medical Records', icon: FileSpreadsheet },
-            { id: 'prescriptions-lab', label: 'Prescriptions & Lab Scales', icon: FileText }
-          ]
-        },
-        {
-          title: 'DIRECTORY',
-          items: [
+            { id: 'records', label: 'Master Patient Registry', icon: FileSpreadsheet },
             { id: 'doctors', label: 'Specialist Directory', icon: Users }
           ]
         }
@@ -84,21 +93,19 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     if (currentRole === 'receptionist') {
       return [
         {
-          title: 'FRONT DESK RECEPTION',
+          title: 'FRONT DESK USE CASES',
           items: [
-            { id: 'clinic-desk', label: 'Reception & Admissions Desk', icon: Building, highlight: true },
-            { id: 'appointments', label: 'Master Appointments', icon: CalendarCheck, badge: upcomingCount > 0 ? upcomingCount : null }
+            { id: 'rec-schedule', label: 'Book & Cancel Appointments', icon: CalendarPlus, badge: upcomingCount > 0 ? upcomingCount : null },
+            { id: 'rec-patients', label: 'Create & Add Patient Records', icon: Users },
+            { id: 'rec-visitors', label: 'Visitor Details & Lounge', icon: UserCheck },
+            { id: 'rec-billing', label: 'Process Patient Payments', icon: CreditCard },
+            { id: 'rec-counselling', label: 'Allot Counselling Sessions', icon: HeartHandshake }
           ]
         },
         {
-          title: 'PATIENT DATA',
+          title: 'CLINIC RESOURCES',
           items: [
-            { id: 'records', label: 'Patient Records Registry', icon: FileSpreadsheet }
-          ]
-        },
-        {
-          title: 'DIRECTORY',
-          items: [
+            { id: 'records', label: 'Master Patient Registry', icon: FileSpreadsheet },
             { id: 'doctors', label: 'Specialist Directory', icon: Stethoscope }
           ]
         }
@@ -108,20 +115,19 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     if (currentRole === 'admin') {
       return [
         {
-          title: 'ADMINISTRATIVE GOVERNANCE',
+          title: 'ADMIN GOVERNANCE USE CASES',
           items: [
-            { id: 'system-overview', label: 'System Overview & Governance', icon: ShieldCheck, highlight: true }
+            { id: 'adm-accounts', label: 'User Account Governance', icon: UserCog },
+            { id: 'adm-reports', label: 'Clinical & Legal Reports (MHA)', icon: BarChart3 },
+            { id: 'adm-sync', label: 'Cross-Clinic Data Sync', icon: RefreshCw },
+            { id: 'adm-audit', label: 'Security & Audit Trail', icon: ShieldAlert, highlight: true },
+            { id: 'adm-broadcasts', label: 'Broadcast Announcements', icon: BellRing }
           ]
         },
         {
-          title: 'HEALTH INFORMATICS',
+          title: 'CENTRAL REGISTRIES',
           items: [
-            { id: 'records', label: 'Central EHR Records', icon: FileSpreadsheet }
-          ]
-        },
-        {
-          title: 'DIRECTORY',
-          items: [
+            { id: 'records', label: 'Central EHR Records', icon: FileSpreadsheet },
             { id: 'doctors', label: 'Specialist Directory', icon: Stethoscope }
           ]
         }
@@ -310,59 +316,56 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           ))}
         </nav>
 
-        {/* Sidebar Footer / Switch Role & Logout */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/90 space-y-2">
-          {/* Switch Role Button */}
+        {/* Footer: Switch Role Modal Trigger & Logout */}
+        <div className="p-4 border-t border-slate-800/80 bg-slate-950/60 space-y-2">
           <button
             onClick={() => setIsSwitchModalOpen(true)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-indigo-200 bg-indigo-950/50 hover:bg-indigo-900/70 border border-indigo-800/60 hover:text-white transition shadow-2xs cursor-pointer"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-indigo-950/50 border border-indigo-900/40 transition cursor-pointer"
           >
-            <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Switch Role (Sign In)</span>
+            <div className="flex items-center gap-2.5">
+              <ArrowRightLeft className="w-4 h-4 text-indigo-400" />
+              <span>Switch Role (Sign In)</span>
+            </div>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
           </button>
 
-          {/* Logout Button */}
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-300 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-900/50 hover:text-rose-100 transition shadow-xs cursor-pointer"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out ({currentRole.toUpperCase()})</span>
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
           </button>
-
-          <div className="pt-1 text-center">
-            <p className="text-[10px] text-slate-500">MHC-PMS Healthcare System • v2.4</p>
-          </div>
         </div>
       </aside>
 
       {/* Switch Role Modal */}
       {isSwitchModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-white shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
-                <ArrowRightLeft className="w-4 h-4 text-indigo-600" />
-                <h3 className="text-sm font-bold text-slate-900">Switch Healthcare Profile</h3>
+                <ArrowRightLeft className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-base font-bold">Switch User Profile</h3>
               </div>
               <button 
                 onClick={() => setIsSwitchModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold"
+                className="text-slate-400 hover:text-white text-sm"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              Switching will log you out from your current <strong>{currentRole}</strong> profile ({currentUser?.fullName}). You will need to enter the credentials for the selected role on the login page.
+            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+              Switching roles will <strong>sign you out</strong> of the active <strong>{currentRole.toUpperCase()}</strong> session. You must authenticate with the target role credentials.
             </p>
 
             <div className="mt-4 space-y-2">
               {[
-                { role: 'doctor', label: 'Doctor', desc: 'Clinical Consultation & EHR', icon: Stethoscope, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-                { role: 'receptionist', label: 'Receptionist', desc: 'Front Desk & Admissions', icon: Building, color: 'text-sky-700 bg-sky-50 border-sky-200' },
-                { role: 'admin', label: 'System Admin', desc: 'IT Governance & Reports', icon: Shield, color: 'text-purple-700 bg-purple-50 border-purple-200' },
-                { role: 'patient', label: 'Patient', desc: 'Personal Health Portal', icon: User, color: 'text-indigo-700 bg-indigo-50 border-indigo-200' }
+                { role: 'doctor', title: 'Doctor (Dr. Shashank Pandey)', icon: Stethoscope, desc: 'Consultation queue, e-Rx, psychometric scales' },
+                { role: 'receptionist', title: 'Receptionist (Medha Banerjee)', icon: Building, desc: 'Appointments, visitors, payments, counselling' },
+                { role: 'admin', title: 'System Admin (Shounak Sarkar)', icon: ShieldCheck, desc: 'Account governance, legal reports, cross-clinic sync' },
+                { role: 'patient', title: 'Patient (Aaryan Kumar)', icon: User, desc: 'Personal EHR, doctor availability, appointment booking' }
               ].map(r => {
                 const Icon = r.icon;
                 const isCurrent = currentRole === r.role;
@@ -371,35 +374,27 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                     key={r.role}
                     disabled={isCurrent}
                     onClick={() => handleSwitchRole(r.role)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold text-left transition cursor-pointer ${
+                    className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between cursor-pointer ${
                       isCurrent 
-                        ? 'bg-slate-100 border-slate-200 opacity-60 cursor-not-allowed'
-                        : `${r.color} hover:shadow-xs active:scale-[0.99]`
+                        ? 'bg-slate-800/40 border-slate-800 text-slate-500 cursor-not-allowed'
+                        : 'bg-slate-800/80 hover:bg-indigo-950/60 border-slate-700/80 hover:border-indigo-500/50 text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 shrink-0" />
+                      <Icon className="w-4 h-4 text-indigo-400" />
                       <div>
-                        <span className="block font-bold text-slate-900">{r.label}</span>
-                        <span className="text-[10px] text-slate-500 font-normal">{r.desc}</span>
+                        <p className="text-xs font-bold">{r.title}</p>
+                        <p className="text-[10px] text-slate-400">{r.desc}</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold">
-                      {isCurrent ? 'Current' : 'Log out & Sign In →'}
-                    </span>
+                    {isCurrent ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-700 text-slate-400">Current</span>
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    )}
                   </button>
                 );
               })}
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsSwitchModalOpen(false)}
-                className="px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-              >
-                Cancel
-              </button>
             </div>
           </div>
         </div>

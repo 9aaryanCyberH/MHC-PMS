@@ -48,12 +48,19 @@ export const ReceptionistDeskView = () => {
     allotCounsellingSession,
     cancelCounsellingSession,
     switchRoleWithLogout,
+    activeTab,
+    setActiveTab,
     showToast 
   } = useApp();
 
-  // Primary subtab navigation matching the 6 core receptionist use-cases:
-  // 'schedule' | 'patients' | 'visitors' | 'billing' | 'counselling'
-  const [currentSubTab, setCurrentSubTab] = useState('schedule');
+  // Synchronize internal subtab with sidebar activeTab
+  const currentSubTab = activeTab && activeTab.startsWith('rec-') 
+    ? activeTab.replace('rec-', '') 
+    : 'schedule';
+
+  const setCurrentSubTab = (tabId) => {
+    setActiveTab('rec-' + tabId);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 

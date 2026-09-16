@@ -520,9 +520,9 @@ export const AppProvider = ({ children }) => {
       : 'patient';
 
     setCurrentRole(actualRole);
-    if (actualRole === 'admin') setActiveTab('system-overview');
-    else if (actualRole === 'receptionist') setActiveTab('clinic-desk');
-    else if (actualRole === 'doctor') setActiveTab('clinical-queue');
+    if (actualRole === 'admin') setActiveTab('adm-accounts');
+    else if (actualRole === 'receptionist') setActiveTab('rec-schedule');
+    else if (actualRole === 'doctor') setActiveTab('doc-queue');
     else setActiveTab('dashboard');
     showToast(`Switched workspace to ${actualRole.toUpperCase()} mode`, 'info');
   };
@@ -554,7 +554,7 @@ export const AppProvider = ({ children }) => {
         defaultEmail: 'shounak.sarkar@mhc-pms.org',
         ids: ['adm-001', 'shounak.sarkar@mhc-pms.org', 'shounak', 'admin', 'admin@mhc-pms.org', 'demo'],
         defaultPass: 'admin123',
-        defaultTab: 'system-overview',
+        defaultTab: 'adm-accounts',
         getName: () => staffProfiles.admin?.fullName || 'Shounak Sarkar'
       },
       receptionist: {
@@ -564,7 +564,7 @@ export const AppProvider = ({ children }) => {
         defaultEmail: 'medha.banerjee@mhc-pms.org',
         ids: ['rec-104', 'medha.banerjee@mhc-pms.org', 'medha', 'reception', 'receptionist@mhc-pms.org', 'demo'],
         defaultPass: 'reception123',
-        defaultTab: 'clinic-desk',
+        defaultTab: 'rec-schedule',
         getName: () => staffProfiles.receptionist?.fullName || 'Medha Banerjee'
       },
       doctor: {
@@ -574,7 +574,7 @@ export const AppProvider = ({ children }) => {
         defaultEmail: 'shashank.pandey@mhc-pms.org',
         ids: ['doc-001', 'shashank.pandey@mhc-pms.org', 'shashank', 'doctor', 'doctor@mhc-pms.org', 'demo'],
         defaultPass: 'doctor123',
-        defaultTab: 'clinical-queue',
+        defaultTab: 'doc-queue',
         getName: () => staffProfiles.doctor?.fullName || 'Dr. Shashank Pandey'
       },
       patient: {
