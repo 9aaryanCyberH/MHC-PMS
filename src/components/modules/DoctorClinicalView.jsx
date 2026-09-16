@@ -36,6 +36,7 @@ export const DoctorClinicalView = () => {
     medicalRecords, 
     prescriptions, 
     addNewPrescription, 
+    updatePrescription,
     labRecords, 
     orderLabTest,
     patientRecordsList,
@@ -50,8 +51,9 @@ export const DoctorClinicalView = () => {
   const [selectedPatientId, setSelectedPatientId] = useState('PT-88204');
   const [queueStatusFilter, setQueueStatusFilter] = useState('All');
 
-  // 1. New Prescription Modal State
+  // 1. New / Update Prescription Modal State
   const [isRxModalOpen, setIsRxModalOpen] = useState(false);
+  const [editingRxId, setEditingRxId] = useState(null);
   const [rxForm, setRxForm] = useState({
     patientId: 'PT-88204',
     patientName: 'Aaryan Kumar',
@@ -123,7 +125,12 @@ export const DoctorClinicalView = () => {
       showToast('Please enter both medication name and dosage.', 'error');
       return;
     }
-    addNewPrescription(rxForm);
+    if (editingRxId) {
+      updatePrescription(editingRxId, rxForm);
+      setEditingRxId(null);
+    } else {
+      addNewPrescription(rxForm);
+    }
     setIsRxModalOpen(false);
     setRxForm({
       patientId: currentPatient.id,
@@ -136,6 +143,22 @@ export const DoctorClinicalView = () => {
       instructions: 'Take consistently with water. Do not discontinue abruptly.',
       refills: 1
     });
+  };
+
+  const handleOpenEditPrescription = (rx) => {
+    setEditingRxId(rx.id);
+    setRxForm({
+      patientId: rx.patientId || currentPatient.id,
+      patientName: rx.patientName || currentPatient.fullName,
+      medicineName: rx.medicineName || (rx.medicines && rx.medicines[0]?.name) || '',
+      category: rx.category || 'Antidepressant (SSRI)',
+      dosage: rx.dosage || (rx.medicines && rx.medicines[0]?.dosage) || '50mg',
+      frequency: rx.frequency || (rx.medicines && rx.medicines[0]?.instructions) || 'Once Daily',
+      duration: rx.duration || '30 Days',
+      instructions: rx.instructions || 'Take consistently with water.',
+      refills: rx.refills || 1
+    });
+    setIsRxModalOpen(true);
   };
 
   const handleOrderLab = (e) => {
@@ -537,6 +560,7 @@ export const DoctorClinicalView = () => {
                   <th className="py-3 px-4">Duration</th>
                   <th className="py-3 px-4">Prescribed Date</th>
                   <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Clinical Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -558,6 +582,15 @@ export const DoctorClinicalView = () => {
                       <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
                         {rx.status || 'Active'}
                       </span>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        onClick={() => handleOpenEditPrescription(rx)}
+                        className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition cursor-pointer flex items-center gap-1 ml-auto"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        <span>Update Treatment</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -722,7 +755,7 @@ export const DoctorClinicalView = () => {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Pill className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-base font-bold text-slate-900">Sign & Issue e-Prescription (e-Rx)</h3>
+                <h3 className="text-base font-bold text-slate-900">{editingRxId ? 'Update Prescription & Treatment Regimen' : 'Sign & Issue e-Prescription (e-Rx)'}</h3>
               </div>
               <button 
                 onClick={() => setIsRxModalOpen(false)}
@@ -829,7 +862,7 @@ export const DoctorClinicalView = () => {
                   type="submit"
                   className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs"
                 >
-                  Sign & Issue e-Rx
+                  {editingRxId ? 'Save Updated Treatment' : 'Sign & Issue e-Rx'}
                 </button>
               </div>
             </form>

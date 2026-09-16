@@ -906,7 +906,23 @@ export const AppProvider = ({ children }) => {
 
     setPrescriptions(prev => [newRecord, ...prev]);
     showToast(`Prescription ${newId} for ${newRxData.medicineName} signed and added to patient record!`);
+    logSystemEvent('Prescription Issued', `Doctor issued e-Rx ${newId} (${newRxData.medicineName}) for ${newRxData.patientName}`);
     return newRecord;
+  };
+
+  const updatePrescription = (rxId, updatedData) => {
+    setPrescriptions(prev => prev.map(rx => {
+      if (rx.id === rxId) {
+        return { 
+          ...rx, 
+          ...updatedData, 
+          lastModified: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+        };
+      }
+      return rx;
+    }));
+    showToast(`Prescription ${rxId} updated successfully.`, 'success');
+    logSystemEvent('Prescription Modified', `Doctor updated treatment regimen for ${rxId} (${updatedData.medicineName || 'Medication'})`);
   };
 
   // Doctor: Order Lab / Psychometric Test
@@ -1103,6 +1119,7 @@ export const AppProvider = ({ children }) => {
         medicalRecords,
         prescriptions,
         addNewPrescription,
+        updatePrescription,
         labRecords,
         orderLabTest,
         isSidebarCollapsed,

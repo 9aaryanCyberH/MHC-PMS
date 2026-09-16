@@ -22,7 +22,17 @@ import { useApp } from '../../context/AppContext';
 import { Badge } from '../common/Badge';
 
 export const PatientRecordsView = () => {
-  const { patientProfile, medicalRecords, showToast } = useApp();
+  const { patientProfile, medicalRecords, patientRecordsList, currentRole, showToast } = useApp();
+
+  const [selectedPatientId, setSelectedPatientId] = useState(patientProfile?.id || 'PT-88204');
+  const matchedRecord = (patientRecordsList || []).find(p => p.id === selectedPatientId);
+  const activeDisplayPatient = {
+    ...patientProfile,
+    ...(matchedRecord || {}),
+    emergencyContact: matchedRecord?.emergencyContact || activeDisplayPatient.emergencyContact,
+    insurance: matchedRecord?.insurance || activeDisplayPatient.insurance,
+    avatar: matchedRecord?.avatar || activeDisplayPatient.avatar
+  };
 
   const handlePrint = () => {
     window.print();
@@ -69,32 +79,57 @@ export const PatientRecordsView = () => {
         </div>
       </div>
 
+            {/* Role-Specific Outpatient Selector for Doctor / Receptionist */}
+      {currentRole !== 'patient' && (
+        <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider">
+            <User className="w-4 h-4 text-indigo-600" />
+            <span>Select Outpatient Record ({currentRole === 'doctor' ? 'Clinical Assessment' : 'Front Desk Registry'}):</span>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            {(patientRecordsList || []).map(p => (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPatientId(p.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                  selectedPatientId === p.id 
+                    ? 'bg-indigo-600 text-white shadow-xs' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                {p.fullName} ({p.id})
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Demographic & Vitals Banner */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Patient Overview */}
           <div className="flex items-start gap-4">
             <img
-              src={patientProfile.avatar}
-              alt={patientProfile.fullName}
+              src={activeDisplayPatient.avatar}
+              alt={activeDisplayPatient.fullName}
               className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-500 shadow-md"
             />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-slate-900">{patientProfile.fullName}</h3>
+                <h3 className="text-lg font-bold text-slate-900">{activeDisplayPatient.fullName}</h3>
                 <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                  {patientProfile.id}
+                  {activeDisplayPatient.id}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">{patientProfile.displayDob} • Blood: {patientProfile.bloodGroup}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{activeDisplayPatient.displayDob || (activeDisplayPatient.age ? `${activeDisplayPatient.age} Yrs (${activeDisplayPatient.gender})` : '21 Yrs')} • Blood: {activeDisplayPatient.bloodGroup}</p>
               <div className="mt-2 text-xs text-slate-600 space-y-1">
                 <div className="flex items-center gap-1.5">
                   <Phone className="w-3 h-3 text-slate-400" />
-                  <span>{patientProfile.phone}</span>
+                  <span>{activeDisplayPatient.phone}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Mail className="w-3 h-3 text-slate-400" />
-                  <span className="truncate">{patientProfile.email}</span>
+                  <span className="truncate">{activeDisplayPatient.email}</span>
                 </div>
               </div>
             </div>
@@ -105,14 +140,14 @@ export const PatientRecordsView = () => {
             <div>
               <span className="text-slate-400 font-medium text-[11px] block">Emergency Contact:</span>
               <p className="font-bold text-slate-800 mt-0.5">
-                {patientProfile.emergencyContact.name} ({patientProfile.emergencyContact.relationship})
+                {activeDisplayPatient.emergencyContact.name} ({activeDisplayPatient.emergencyContact.relationship})
               </p>
-              <p className="text-slate-600">{patientProfile.emergencyContact.phone}</p>
+              <p className="text-slate-600">{activeDisplayPatient.emergencyContact.phone}</p>
             </div>
             <div className="pt-2 border-t border-slate-200/60">
               <span className="text-slate-400 font-medium text-[11px] block">Medical Insurance:</span>
-              <p className="font-semibold text-slate-800 mt-0.5">{patientProfile.insurance.provider}</p>
-              <p className="text-slate-500 font-mono text-[11px]">Policy: {patientProfile.insurance.policyNo}</p>
+              <p className="font-semibold text-slate-800 mt-0.5">{activeDisplayPatient.insurance.provider}</p>
+              <p className="text-slate-500 font-mono text-[11px]">Policy: {activeDisplayPatient.insurance.policyNo}</p>
             </div>
           </div>
 
