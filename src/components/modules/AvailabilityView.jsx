@@ -218,7 +218,7 @@ export const AvailabilityView = () => {
       {/* Consultation Criteria Form */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
         <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-          <CalendarClock className="w-4 h-4 text-indigo-600" />
+          <CalendarClock className="w-4 h-4 text-amber-500" />
           <span>Consultation Search Criteria</span>
         </h3>
 
@@ -235,7 +235,7 @@ export const AvailabilityView = () => {
                   setSelectedSpeciality(e.target.value);
                   setHasChecked(false);
                 }}
-                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition"
               >
                 {specialitiesList.map(spec => (
                   <option key={spec} value={spec}>{spec}</option>
@@ -257,7 +257,7 @@ export const AvailabilityView = () => {
                   setSelectedDoctorId(e.target.value);
                   setHasChecked(false);
                 }}
-                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition"
               >
                 {filteredDoctors.map(doc => (
                   <option key={doc.id} value={doc.id}>
@@ -284,7 +284,7 @@ export const AvailabilityView = () => {
                   setSelectedDate(e.target.value);
                   setHasChecked(false);
                 }}
-                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition"
               />
             </div>
             <span className="text-[10px] text-slate-400 mt-1 block">e.g. 18 September 2026</span>
@@ -302,7 +302,7 @@ export const AvailabilityView = () => {
                   setPreferredTimePeriod(e.target.value);
                   setHasChecked(false);
                 }}
-                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                className="w-full px-3 py-2.5 bg-slate-50 hover:bg-white text-xs text-slate-800 font-medium rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition"
               >
                 <option value="Morning">Morning (09:00 AM - 12:00 PM)</option>
                 <option value="Afternoon">Afternoon (12:00 PM - 04:30 PM)</option>
@@ -321,11 +321,11 @@ export const AvailabilityView = () => {
               <img
                 src={activeDoctor.avatar}
                 alt={activeDoctor.name}
-                className="w-10 h-10 rounded-full object-cover border border-indigo-500"
+                className="w-10 h-10 rounded-full object-cover border-2 border-amber-400"
               />
               <div>
                 <p className="font-bold text-slate-900">{activeDoctor.name} <span className="font-normal text-slate-500">({activeDoctor.qualification})</span></p>
-                <p className="text-[11px] text-indigo-700 font-medium">
+                <p className="text-[11px] text-amber-700 font-semibold">
                   {activeDoctor.speciality} • {activeDoctor.experience} Exp • Consultation Fee: ₹{activeDoctor.consultationFee}
                 </p>
               </div>
@@ -342,11 +342,11 @@ export const AvailabilityView = () => {
           <button
             onClick={handleCheckAvailability}
             disabled={isChecking}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md hover:shadow-indigo-700/20 transition cursor-pointer disabled:opacity-75"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md shadow-amber-400/20 transition cursor-pointer disabled:opacity-75"
           >
             {isChecking ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                 <span>Checking Doctor's Schedule...</span>
               </>
             ) : (
@@ -395,7 +395,7 @@ export const AvailabilityView = () => {
               {/* Slot Cards Grid */}
               <div className="mt-6">
                 <p className="text-xs font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-indigo-600" />
+                  <Clock className="w-4 h-4 text-amber-500" />
                   <span>Available Consultation Slots for {checkResult.displayDate}:</span>
                 </p>
 
@@ -408,12 +408,12 @@ export const AvailabilityView = () => {
                         onClick={() => setSelectedSlot(slot)}
                         className={`p-4 rounded-2xl border transition cursor-pointer text-center relative ${
                           isSelected
-                            ? 'bg-indigo-50 border-indigo-600 shadow-md ring-2 ring-indigo-500'
-                            : 'bg-white border-slate-200 hover:border-indigo-400 hover:shadow-xs'
+                            ? 'bg-amber-50/80 border-amber-400 shadow-md ring-2 ring-amber-400'
+                            : 'bg-white border-slate-200 hover:border-amber-300 hover:shadow-xs'
                         }`}
                       >
                         {isSelected && (
-                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px]">
+                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] font-bold">
                             <Check className="w-3 h-3" />
                           </div>
                         )}
@@ -428,8 +428,8 @@ export const AvailabilityView = () => {
                           }}
                           className={`mt-2.5 w-full py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                             isSelected
-                              ? 'bg-indigo-600 text-white shadow-xs'
-                              : 'bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-800'
+                              ? 'bg-amber-400 text-slate-950 shadow-xs'
+                              : 'bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-950'
                           }`}
                         >
                           {isSelected ? 'Selected' : 'Select Slot'}
@@ -471,7 +471,7 @@ export const AvailabilityView = () => {
                   <button
                     onClick={handleBookSelectedSlot}
                     disabled={!selectedSlot}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition cursor-pointer"
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-amber-400/20 transition cursor-pointer"
                   >
                     <span>Proceed to Book Appointment</span>
                     <ArrowRight className="w-4 h-4" />
@@ -513,7 +513,7 @@ export const AvailabilityView = () => {
                       setSelectedDate(nextDate);
                       handleCheckAvailability();
                     }}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-indigo-900 bg-indigo-100 hover:bg-indigo-200 transition cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-amber-950 bg-amber-100 hover:bg-amber-200 transition cursor-pointer"
                   >
                     Choose Another Time
                   </button>
@@ -542,7 +542,7 @@ export const AvailabilityView = () => {
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                        <CalendarDays className="w-4 h-4 text-indigo-600" />
+                        <CalendarDays className="w-4 h-4 text-amber-500" />
                         <span>Keep {activeDoctor.name} & Select Next Working Date</span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1">
@@ -550,14 +550,14 @@ export const AvailabilityView = () => {
                       </p>
                     </div>
                     <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between">
-                      <span className="text-[11px] text-indigo-700 font-semibold">Suggested: Next Monday (21 Sep)</span>
+                      <span className="text-[11px] text-amber-800 font-semibold">Suggested: Next Monday (21 Sep)</span>
                       <button
                         onClick={() => {
                           setSelectedDate('2026-09-21');
                           setPreferredTimePeriod('Morning');
                           handleCheckAvailability();
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition cursor-pointer"
+                        className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition cursor-pointer shadow-xs"
                       >
                         Check Next Working Day
                       </button>
@@ -569,7 +569,7 @@ export const AvailabilityView = () => {
                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
                       <div>
                         <div className="flex items-center gap-2 text-xs font-bold text-slate-900">
-                          <Stethoscope className="w-4 h-4 text-indigo-600" />
+                          <Stethoscope className="w-4 h-4 text-amber-500" />
                           <span>Switch to an Available Colleague</span>
                         </div>
                         <p className="text-[11px] text-slate-500 mt-1">
@@ -588,7 +588,7 @@ export const AvailabilityView = () => {
                                   setSelectedSpeciality(altDoc.speciality);
                                   handleCheckAvailability();
                                 }}
-                                className="text-xs text-indigo-700 font-semibold hover:underline cursor-pointer"
+                                className="text-xs text-amber-700 font-bold hover:underline cursor-pointer"
                               >
                                 Select & Check
                               </button>

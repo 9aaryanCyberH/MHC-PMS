@@ -3,6 +3,7 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { Toast } from './components/common/Toast';
+import { LandingView } from './components/modules/LandingView';
 import { LoginView } from './components/modules/LoginView';
 import { DashboardView } from './components/modules/DashboardView';
 import { AvailabilityView } from './components/modules/AvailabilityView';
@@ -10,7 +11,7 @@ import { AppointmentsView } from './components/modules/AppointmentsView';
 import { PatientRecordsView } from './components/modules/PatientRecordsView';
 import { PrescriptionsLabView } from './components/modules/PrescriptionsLabView';
 import { DoctorsView } from './components/modules/DoctorsView';
-import { PatientProfileView } from './components/modules/PatientProfileView';
+import { ProfileView } from './components/modules/ProfileView';
 import { BookAppointmentModal } from './components/modules/BookAppointmentModal';
 import { DoctorClinicalView } from './components/modules/DoctorClinicalView';
 import { ReceptionistDeskView } from './components/modules/ReceptionistDeskView';
@@ -19,6 +20,7 @@ import { AdminGovernanceView } from './components/modules/AdminGovernanceView';
 const MainLayout = () => {
   const { 
     isAuthenticated, 
+    publicView,
     currentRole,
     activeTab, 
     isBookingModalOpen, 
@@ -30,8 +32,17 @@ const MainLayout = () => {
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // If unauthenticated, show the multi-role login screen with dropdown
+  // If unauthenticated, show either public landing page or login view
   if (!isAuthenticated) {
+    if (publicView === 'landing') {
+      return (
+        <>
+          <LandingView />
+          <Toast />
+        </>
+      );
+    }
+
     return (
       <>
         <LoginView />
@@ -41,10 +52,16 @@ const MainLayout = () => {
   }
 
   const renderActiveModule = () => {
+    // Universal profile route for all authenticated stakeholders
+    if (activeTab === 'profile') {
+      return <ProfileView />;
+    }
+
     // Role-specific routing
     if (currentRole === 'doctor') {
       if (activeTab === 'doctors') return <DoctorsView />;
       if (activeTab === 'records') return <PatientRecordsView />;
+      if (activeTab === 'doc-sync' || activeTab === 'adm-sync') return <AdminGovernanceView />;
       if (activeTab === 'prescriptions-lab') return <PrescriptionsLabView />;
       if (activeTab === 'appointments') return <AppointmentsView />;
       return <DoctorClinicalView />;
@@ -54,6 +71,7 @@ const MainLayout = () => {
       if (activeTab === 'doctors') return <DoctorsView />;
       if (activeTab === 'appointments') return <AppointmentsView />;
       if (activeTab === 'records') return <PatientRecordsView />;
+      if (activeTab === 'rec-sync' || activeTab === 'adm-sync') return <AdminGovernanceView />;
       return <ReceptionistDeskView />;
     }
 
@@ -73,13 +91,13 @@ const MainLayout = () => {
       case 'appointments':
         return <AppointmentsView />;
       case 'records':
-        return <PatientRecordsView />;
+        return <PrescriptionsLabView />;
       case 'prescriptions-lab':
         return <PrescriptionsLabView />;
       case 'doctors':
         return <DoctorsView />;
       case 'profile':
-        return <PatientProfileView />;
+        return <ProfileView />;
       default:
         return <DashboardView />;
     }

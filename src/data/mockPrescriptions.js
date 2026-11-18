@@ -1,6 +1,10 @@
+// Prescriptions issued by Dr. Shashank Pandey for Patient 1 (Aaryan Kumar) & Patient 2 (Agniva Samaddar)
+
 export const mockPrescriptions = [
   {
     id: "RX-2026-089",
+    patientId: "PT-88204",
+    patientName: "Aaryan Kumar",
     doctor: "Dr. Shashank Pandey",
     doctorSpeciality: "Chief Consultant Psychiatrist",
     date: "20 August 2026",
@@ -39,7 +43,41 @@ export const mockPrescriptions = [
     ]
   },
   {
+    id: "RX-2026-092",
+    patientId: "PT-88205",
+    patientName: "Agniva Samaddar",
+    doctor: "Dr. Shashank Pandey",
+    doctorSpeciality: "Chief Consultant Psychiatrist",
+    date: "05 September 2026",
+    diagnosis: "ADHD (Inattentive Type) & Delayed Sleep Phase",
+    validUntil: "05 November 2026",
+    status: "Active",
+    instructionsGeneral: "Take morning medication with a protein-rich breakfast. Evening melatonin at least 45 minutes before sleep in a dimly lit room.",
+    medicines: [
+      {
+        name: "Tab. Methylphenidate Hydrochloride ER",
+        strength: "10 mg",
+        dosage: "1 Tablet",
+        frequency: "Once Daily (Morning at 08:30 AM)",
+        duration: "30 Days",
+        instructions: "Swallow whole with plenty of water. Supports sustained daytime executive focus.",
+        refillsRemaining: 1
+      },
+      {
+        name: "Tab. Melatonin Fast-Dissolve",
+        strength: "3 mg",
+        dosage: "1 Tablet",
+        frequency: "Once Daily (Night at 10:30 PM)",
+        duration: "30 Days",
+        instructions: "Circadian phase advance protocol. Avoid blue-light devices after intake.",
+        refillsRemaining: 2
+      }
+    ]
+  },
+  {
     id: "RX-2026-054",
+    patientId: "PT-88204",
+    patientName: "Aaryan Kumar",
     doctor: "Dr. Shashank Pandey",
     doctorSpeciality: "Chief Consultant Psychiatrist",
     date: "12 May 2026",
@@ -55,45 +93,6 @@ export const mockPrescriptions = [
         frequency: "Once Daily (Morning)",
         duration: "14 Days (Starter Dose)",
         instructions: "Titration starter dose before increasing to 10mg.",
-        refillsRemaining: 0
-      },
-      {
-        name: "Tab. Zolpidem Tartrate",
-        strength: "5 mg",
-        dosage: "1 Tablet",
-        frequency: "Once at bedtime (Short term only)",
-        duration: "7 Days",
-        instructions: "Take right before getting into bed. Discontinued after 7 days.",
-        refillsRemaining: 0
-      }
-    ]
-  },
-  {
-    id: "RX-2025-112",
-    doctor: "Dr. Priya Nair",
-    doctorSpeciality: "Neuropsychiatrist",
-    date: "14 November 2025",
-    diagnosis: "Neuro-Nutritional Supplementation",
-    validUntil: "14 February 2026",
-    status: "Completed",
-    instructionsGeneral: "Nutritional neural support following cognitive workup.",
-    medicines: [
-      {
-        name: "Cap. Methylcobalamin + Alpha Lipoic Acid",
-        strength: "1500 mcg / 100 mg",
-        dosage: "1 Capsule",
-        frequency: "Once Daily (After lunch)",
-        duration: "90 Days",
-        instructions: "Aids peripheral nerve conduction and neuroprotection.",
-        refillsRemaining: 0
-      },
-      {
-        name: "Tab. Cholecalciferol (Vitamin D3)",
-        strength: "60,000 IU",
-        dosage: "1 Tablet",
-        frequency: "Once Weekly (Sunday morning with milk)",
-        duration: "8 Weeks",
-        instructions: "Correction of mild vitamin D insufficiency.",
         refillsRemaining: 0
       }
     ]

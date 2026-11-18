@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { mockDoctors } from '../data/mockDoctors';
 import { initialAppointments } from '../data/mockAppointments';
-import { mockPatientProfile, mockMedicalRecords } from '../data/mockMedicalRecords';
+import { mockPatients } from '../data/mockMedicalRecords';
 import { mockPrescriptions } from '../data/mockPrescriptions';
 import { mockLabRecords } from '../data/mockLabRecords';
 import { 
@@ -13,124 +13,62 @@ import {
   initialWaitingVisitors, 
   initialBroadcastNotifications 
 } from '../data/mockSystemData';
+import { 
+  getActiveFirebaseConfig, 
+  saveActiveFirebaseConfig, 
+  testFirebaseConnection, 
+  syncCollectionToFirestore, 
+  fetchCollectionFromFirestore,
+  isFirebaseConfigured
+} from '../services/firebase';
+import { 
+  exportFullMHCWorkbook, 
+  exportSingleCollectionToCsv 
+} from '../utils/excelExporter';
 
 const AppContext = createContext();
 
-// Initial comprehensive patient registry for Receptionist & Doctor
+// Initial patient records for Receptionist & Doctor (Only real patients: Aaryan Kumar & Agniva Samaddar)
 export const initialPatientRecordsList = [
   {
     id: "PT-88204",
     fullName: "Aaryan Kumar",
-    dob: "2005-04-14",
+    dob: "2005-04-09",
     age: 21,
     gender: "Male",
     bloodGroup: "A+",
     phone: "+91 98765 43210",
     email: "aaryan.kumar@example.com",
-    address: "Indiranagar, Bengaluru, KA",
+    address: "Flat 402, Greenfield Residences, Indiranagar, Bengaluru, KA 560038",
     emergencyContact: "Sunita Kumar (Parent) - +91 98765 12345",
     assignedDoctor: "Dr. Shashank Pandey",
     primaryDiagnosis: "Generalized Anxiety Disorder (GAD)",
     severity: "Mild to Moderate",
     clinicNode: "Central Hospital OPD",
     registeredDate: "2025-05-12",
-    insuranceProvider: "Star Health Care",
-    activeStatus: "Active Outpatient"
+    insuranceProvider: "Star Health Care Medical Insurance",
+    activeStatus: "Active Outpatient",
+    avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=300"
   },
   {
     id: "PT-88205",
-    fullName: "Sneha Patel",
-    dob: "2000-08-22",
-    age: 26,
-    gender: "Female",
+    fullName: "Agniva Samaddar",
+    dob: "2004-10-18",
+    age: 22,
+    gender: "Male",
     bloodGroup: "B+",
-    phone: "+91 98451 22334",
-    email: "sneha.patel@example.com",
-    address: "Whitefield, Bengaluru, KA",
-    emergencyContact: "Manoj Patel (Brother) - +91 98451 22330",
-    assignedDoctor: "Dr. Rajesh Verma",
-    primaryDiagnosis: "Major Depressive Disorder (Moderate)",
-    severity: "Moderate",
-    clinicNode: "South Specialty Centre",
-    registeredDate: "2025-06-18",
-    insuranceProvider: "HDFC ERGO Health",
-    activeStatus: "Active Outpatient"
-  },
-  {
-    id: "PT-88207",
-    fullName: "Kunal Ghosh",
-    dob: "1995-11-03",
-    age: 31,
-    gender: "Male",
-    bloodGroup: "O+",
-    phone: "+91 97112 55667",
-    email: "kunal.ghosh@example.com",
-    address: "Koramangala, Bengaluru, KA",
-    emergencyContact: "Rina Ghosh (Spouse) - +91 97112 55660",
-    assignedDoctor: "Dr. Kabir Sengupta",
-    primaryDiagnosis: "Bipolar Affective Disorder (Type II)",
-    severity: "Guarded / Monitoring",
-    clinicNode: "Central Hospital OPD",
-    registeredDate: "2025-07-20",
-    insuranceProvider: "ICICI Lombard",
-    activeStatus: "Active Clinical Watch"
-  },
-  {
-    id: "PT-88208",
-    fullName: "Deepa Nair",
-    dob: "1997-03-19",
-    age: 29,
-    gender: "Female",
-    bloodGroup: "AB+",
-    phone: "+91 96220 88990",
-    email: "deepa.nair@example.com",
-    address: "Sector 14, West Hub, Bengaluru",
-    emergencyContact: "Gopinath Nair (Father) - +91 96220 88999",
+    phone: "+91 98301 55678",
+    email: "agniva.samaddar@example.com",
+    address: "Tower 3, Lakeview Enclave, Salt Lake Sector V, Kolkata, WB 700091",
+    emergencyContact: "Subrata Samaddar (Parent) - +91 98301 55670",
     assignedDoctor: "Dr. Shashank Pandey",
-    primaryDiagnosis: "Adult Attention Deficit Disorder (ADHD)",
+    primaryDiagnosis: "Adult Attention & Sleep Phase Dysregulation",
     severity: "Mild",
-    clinicNode: "West Community Clinic",
-    registeredDate: "2025-08-14",
-    insuranceProvider: "Max Bupa Health",
-    activeStatus: "Active Outpatient"
-  },
-  {
-    id: "PT-88210",
-    fullName: "Karan Johar",
-    dob: "2007-09-05",
-    age: 19,
-    gender: "Male",
-    bloodGroup: "B-",
-    phone: "+91 95331 44556",
-    email: "karan.johar@example.com",
-    address: "Jayanagar, Bengaluru, KA",
-    emergencyContact: "Sunita Johar (Mother) - +91 95331 44550",
-    assignedDoctor: "Dr. Rajesh Verma",
-    primaryDiagnosis: "Panic Disorder with Agoraphobia",
-    severity: "Moderate to Severe",
     clinicNode: "Central Hospital OPD",
-    registeredDate: "2025-09-01",
-    insuranceProvider: "Care Health Insurance",
-    activeStatus: "In Triage / Urgent"
-  },
-  {
-    id: "PT-88212",
-    fullName: "Anita Roy",
-    dob: "1992-12-30",
-    age: 34,
-    gender: "Female",
-    bloodGroup: "A-",
-    phone: "+91 94220 33445",
-    email: "anita.roy@example.com",
-    address: "Civil Lines, North Wing, Bengaluru",
-    emergencyContact: "Alok Roy (Spouse) - +91 94220 33440",
-    assignedDoctor: "Dr. Meera Nambiar",
-    primaryDiagnosis: "Post-Traumatic Stress Disorder (PTSD)",
-    severity: "Moderate",
-    clinicNode: "North Specialty Satellite",
-    registeredDate: "2025-09-10",
-    insuranceProvider: "Star Health Care",
-    activeStatus: "Active Psychotherapy"
+    registeredDate: "2025-06-18",
+    insuranceProvider: "HDFC ERGO Health Suraksha",
+    activeStatus: "Active Outpatient",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=300"
   }
 ];
 
@@ -140,52 +78,35 @@ export const initialCounsellingSessions = [
     sessionId: "CNS-2026-701",
     patientId: "PT-88204",
     patientName: "Aaryan Kumar",
-    therapistName: "Dr. Kabir Sengupta",
-    therapistRole: "Clinical Psychologist & CBT Specialist",
-    therapyType: "Cognitive Behavioral Therapy (CBT)",
+    therapistName: "Dr. Shashank Pandey",
+    therapistRole: "Chief Consultant Psychiatrist",
+    therapyType: "Cognitive Behavioral Restructuring (CBT)",
     date: "2026-09-21",
     displayDate: "21 Sep 2026",
     time: "11:30 AM",
     duration: "45 Minutes",
-    format: "In-Person Clinic Suite #4",
+    format: "In-Person Clinic Suite #204",
     status: "Confirmed",
-    clinicalObjective: "Cognitive restructuring for academic somatic tension and cognitive thought records.",
+    clinicalObjective: "Cognitive restructuring for academic somatic tension and autonomic relaxation drills.",
     allottedBy: "Medha Banerjee (Receptionist)",
     allottedDate: "2026-09-16"
   },
   {
     sessionId: "CNS-2026-702",
     patientId: "PT-88205",
-    patientName: "Sneha Patel",
-    therapistName: "Dr. Rajesh Verma",
-    therapistRole: "Consultant Psychotherapist",
-    therapyType: "Behavioral Activation Therapy (BAT)",
+    patientName: "Agniva Samaddar",
+    therapistName: "Dr. Shashank Pandey",
+    therapistRole: "Chief Consultant Psychiatrist",
+    therapyType: "Executive Function & Chronotherapy Planning",
     date: "2026-09-23",
     displayDate: "23 Sep 2026",
     time: "02:00 PM",
-    duration: "60 Minutes",
-    format: "Tele-Therapy Secure Room #2",
+    duration: "45 Minutes",
+    format: "In-Person Clinic Suite #204",
     status: "Confirmed",
-    clinicalObjective: "Graded activity scheduling and pleasure/mastery ratings for depressive inertia.",
+    clinicalObjective: "Task chunking strategies, evening melatonin titration, and sleep latency stabilization.",
     allottedBy: "Medha Banerjee (Receptionist)",
     allottedDate: "2026-09-15"
-  },
-  {
-    sessionId: "CNS-2026-703",
-    patientId: "PT-88212",
-    patientName: "Anita Roy",
-    therapistName: "Dr. Meera Nambiar",
-    therapistRole: "Trauma Specialist & EMDR Clinician",
-    therapyType: "Trauma-Informed Psychotherapy & EMDR",
-    date: "2026-09-25",
-    displayDate: "25 Sep 2026",
-    time: "04:15 PM",
-    duration: "60 Minutes",
-    format: "In-Person Calm Suite #1",
-    status: "Scheduled",
-    clinicalObjective: "Grounding techniques, dual-attention bilateral stimulation, resource installation.",
-    allottedBy: "Medha Banerjee (Receptionist)",
-    allottedDate: "2026-09-16"
   }
 ];
 
@@ -196,33 +117,22 @@ export const initialRiskAlerts = [
     patientId: "PT-88204",
     patientName: "Aaryan Kumar",
     riskLevel: "Low",
-    alertType: "Routine Affective Review",
-    summary: "Mild somatic tension; no active or passive self-harm ideation reported.",
+    alertType: "Affective Review & Sleep Monitoring",
+    summary: "Mild academic stress; baseline sleep latency improved under 25 minutes; no self-harm ideation.",
     lastEvaluated: "18 Sep 2026",
     evaluatedBy: "Dr. Shashank Pandey",
-    actionPlan: "Continue current SSRI dosage; review sleep log in 14 days."
+    actionPlan: "Continue current SSRI dosage; review sleep log in 30 days."
   },
   {
     id: "RISK-102",
-    patientId: "PT-88207",
-    patientName: "Kunal Ghosh",
-    riskLevel: "High",
-    alertType: "Medication Non-Adherence & Hypomanic Shift",
-    summary: "Patient missed 4 consecutive lithium carbonate doses; family reports elevated psychomotor agitation.",
+    patientId: "PT-88205",
+    patientName: "Agniva Samaddar",
+    riskLevel: "Low",
+    alertType: "Stimulant & Circadian Adherence Review",
+    summary: "Good daytime executive stamina; evening chronotherapy routine compliant without digital stimulants.",
     lastEvaluated: "17 Sep 2026",
-    evaluatedBy: "Dr. Kabir Sengupta",
-    actionPlan: "Mandatory urgent serum lithium toxicology assay; caregiver contact initiated."
-  },
-  {
-    id: "RISK-103",
-    patientId: "PT-88210",
-    patientName: "Karan Johar",
-    riskLevel: "Moderate",
-    alertType: "Acute Panic Exacerbation",
-    summary: "Severe anticipatory panic attacks requiring emergency OPD stabilization.",
-    lastEvaluated: "16 Sep 2026",
-    evaluatedBy: "Dr. Rajesh Verma",
-    actionPlan: "Short-course low-dose clonazepam bridging with CBT exposure therapy."
+    evaluatedBy: "Dr. Shashank Pandey",
+    actionPlan: "Maintain morning Methylphenidate ER 10mg; review at monthly OPD."
   }
 ];
 
@@ -233,15 +143,15 @@ export const initialAuditLogs = [
     timestamp: "2026-09-18 10:14:22",
     user: "Shounak Sarkar (System Admin)",
     eventType: "Database Synchronization",
-    details: "Automated incremental replication triggered between Central Hub and North Satellite.",
+    details: "Automated incremental replication verified between Central Hub and Regional Satellites.",
     severity: "Info"
   },
   {
     id: "AUDIT-902",
     timestamp: "2026-09-18 09:45:10",
     user: "Medha Banerjee (Receptionist)",
-    eventType: "Patient Record Creation",
-    details: "Registered new patient profile PT-88212 (Anita Roy) into Outpatient Registry.",
+    eventType: "Patient Consultation Check-in",
+    details: "Checked in Patient PT-88204 (Aaryan Kumar) for scheduled OPD appointment with Dr. Shashank Pandey.",
     severity: "Info"
   },
   {
@@ -249,27 +159,36 @@ export const initialAuditLogs = [
     timestamp: "2026-09-18 09:12:05",
     user: "Dr. Shashank Pandey (Doctor)",
     eventType: "e-Prescription Signed",
-    details: "Issued e-Rx RX-2026-441 (Sertraline HCl 50mg) for PT-88204 under DISHA compliance.",
+    details: "Issued e-Rx RX-2026-089 (Escitalopram Oxalate 10mg) for PT-88204 under DISHA compliance.",
     severity: "Info"
   },
   {
     id: "AUDIT-904",
     timestamp: "2026-09-17 18:30:00",
     user: "Shounak Sarkar (System Admin)",
-    eventType: "Account Lifecycle Event",
-    details: "Deactivated dormant account REC-105 (Rohan Kulkarni) following security review.",
-    severity: "Warning"
+    eventType: "Security Audit Check",
+    details: "Role-Based Access Control (RBAC) integrity check verified across all 4 system tiers.",
+    severity: "Info"
   }
 ];
 
 export const AppProvider = ({ children }) => {
+  // Navigation when unauthenticated: 'landing' | 'login' | 'register'
+  const [publicView, setPublicView] = useState('landing');
+
   // Current active role: 'admin' | 'receptionist' | 'doctor' | 'patient'
   const [currentRole, setCurrentRole] = useState(() => {
     const saved = localStorage.getItem('mhc_current_role');
     return saved || 'patient';
   });
 
-  // Auth state - starts unauthenticated on fresh open so login screen is presented first
+  // Track active patient ID: 'PT-88204' (Aaryan Kumar) or 'PT-88205' (Agniva Samaddar)
+  const [currentPatientId, setCurrentPatientId] = useState(() => {
+    const saved = localStorage.getItem('mhc_current_patient_id');
+    return saved || 'PT-88204';
+  });
+
+  // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Switch profile notice state
@@ -278,67 +197,181 @@ export const AppProvider = ({ children }) => {
   // Toast notification
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Patient profile (for patient portal)
-  const [patientProfile, setPatientProfile] = useState(() => {
-    const saved = localStorage.getItem('mhc_patient_profile');
+  // Multi-patient profiles dictionary
+  const [patientProfiles, setPatientProfiles] = useState(() => {
+    const saved = localStorage.getItem('mhc_patients_data');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.fullName === 'Rahul Mehta' || !parsed.fullName) {
-        return mockPatientProfile;
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed["PT-88204"] && parsed["PT-88205"]) {
+          return parsed;
+        }
+      } catch {
+        // fallback
       }
-      return { ...mockPatientProfile, ...parsed };
     }
-    return mockPatientProfile;
+    return mockPatients;
   });
 
-  // Staff profiles (Doctor, Receptionist, Admin)
+  // Active patient profile getter
+  const patientProfile = patientProfiles[currentPatientId] || patientProfiles["PT-88204"] || mockPatients["PT-88204"];
+
+  // Medical records for current patient
+  const medicalRecords = {
+    vitals: patientProfile.vitals || mockPatients["PT-88204"].vitals,
+    diagnoses: patientProfile.diagnoses || mockPatients["PT-88204"].diagnoses,
+    allergies: patientProfile.allergies || mockPatients["PT-88204"].allergies,
+    consultations: patientProfile.consultations || mockPatients["PT-88204"].consultations,
+    treatments: patientProfile.treatments || mockPatients["PT-88204"].treatments
+  };
+
+  // Staff profiles (Doctor: Dr. Shashank Pandey, Receptionist: Medha Banerjee, Admin: Shounak Sarkar)
   const [staffProfiles, setStaffProfiles] = useState(() => {
     const saved = localStorage.getItem('mhc_staff_profiles');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.doctor?.fullName === 'Dr. Ananya Sharma' || parsed.admin?.fullName === 'Vikram Deshmukh' || parsed.receptionist?.fullName === 'Priya Nair') {
-        return mockStaffProfiles;
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.doctor?.fullName?.includes('Shashank') && parsed.admin?.fullName?.includes('Shounak')) {
+          return parsed;
+        }
+      } catch {
+        // fallback
       }
-      return { ...mockStaffProfiles, ...parsed };
     }
     return mockStaffProfiles;
   });
 
-  // Comprehensive patient records registry (Receptionist & Doctor)
+  // Comprehensive patient records registry (Receptionist, Doctor, Admin)
   const [patientRecordsList, setPatientRecordsList] = useState(() => {
     const saved = localStorage.getItem('mhc_patient_records_list');
-    return saved ? JSON.parse(saved) : initialPatientRecordsList;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.some(p => p.id === 'PT-88205')) {
+          return parsed;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return initialPatientRecordsList;
   });
 
-  // Counselling sessions registry (Receptionist Allotment & Doctor Therapy)
+  // User accounts registry for Admin management & Authentication
+  const [userAccounts, setUserAccounts] = useState(() => {
+    const saved = localStorage.getItem('mhc_user_accounts');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.some(a => a.name === 'Agniva Samaddar') && !parsed.some(a => a.name === 'Dr. Rajesh Verma')) {
+          return parsed;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return initialUserAccounts;
+  });
+
+  // Password store for custom user-created credentials & password changes
+  const [userPasswords, setUserPasswords] = useState(() => {
+    const saved = localStorage.getItem('mhc_user_passwords');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        // fallback
+      }
+    }
+    return {
+      'ADM-001': 'admin123',
+      'REC-104': 'reception123',
+      'DOC-001': 'doctor123',
+      'PT-88204': 'patient123',
+      'PT-88205': 'patient123'
+    };
+  });
+
+  // Doctors directory (NO dummy doctors - only Dr. Shashank Pandey initially)
+  const [doctors, setDoctors] = useState(() => {
+    const saved = localStorage.getItem('mhc_doctors_list');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0 && !parsed.some(d => d.name === 'Dr. Rajesh Verma')) {
+          return parsed;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return mockDoctors;
+  });
+
+  // Appointments
+  const [appointments, setAppointments] = useState(() => {
+    const saved = localStorage.getItem('mhc_appointments');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.some(a => a.patientName === 'Agniva Samaddar')) {
+          return parsed;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return initialAppointments;
+  });
+
+  // Prescriptions
+  const [prescriptions, setPrescriptions] = useState(() => {
+    const saved = localStorage.getItem('mhc_prescriptions');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.some(p => p.patientName === 'Agniva Samaddar')) {
+          return parsed;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return mockPrescriptions;
+  });
+
+  // Diagnostic Lab records
+  const [labRecords, setLabRecords] = useState(() => {
+    const saved = localStorage.getItem('mhc_lab_records');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.some(l => l.patientName === 'Agniva Samaddar')) {
+          return parsed;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return mockLabRecords;
+  });
+
+  // Counselling sessions registry
   const [counsellingSessions, setCounsellingSessions] = useState(() => {
     const saved = localStorage.getItem('mhc_counselling_sessions');
     return saved ? JSON.parse(saved) : initialCounsellingSessions;
   });
 
-  // Clinical risk alerts (Continuous Patient Monitoring)
+  // Clinical risk alerts
   const [patientRiskAlerts, setPatientRiskAlerts] = useState(() => {
     const saved = localStorage.getItem('mhc_risk_alerts');
     return saved ? JSON.parse(saved) : initialRiskAlerts;
   });
 
-  // System audit logs (System Admin)
+  // System audit logs
   const [systemAuditLogs, setSystemAuditLogs] = useState(() => {
     const saved = localStorage.getItem('mhc_audit_logs');
     return saved ? JSON.parse(saved) : initialAuditLogs;
-  });
-
-  // User accounts registry for Admin management
-  const [userAccounts, setUserAccounts] = useState(() => {
-    const saved = localStorage.getItem('mhc_user_accounts');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.some(a => a.name === 'Rahul Mehta' || a.name === 'Dr. Ananya Sharma')) {
-        return initialUserAccounts;
-      }
-      return parsed;
-    }
-    return initialUserAccounts;
   });
 
   // Cross-clinic synchronization nodes
@@ -365,28 +398,16 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : initialBroadcastNotifications;
   });
 
-  // Appointments
-  const [appointments, setAppointments] = useState(() => {
-    const saved = localStorage.getItem('mhc_appointments');
-    return saved ? JSON.parse(saved) : initialAppointments;
-  });
-
-  // Prescriptions
-  const [prescriptions, setPrescriptions] = useState(() => {
-    const saved = localStorage.getItem('mhc_prescriptions');
-    return saved ? JSON.parse(saved) : mockPrescriptions;
-  });
-
-  // Diagnostic Lab records
-  const [labRecords, setLabRecords] = useState(() => {
-    const saved = localStorage.getItem('mhc_lab_records');
-    return saved ? JSON.parse(saved) : mockLabRecords;
-  });
-
-  // Doctors & records
-  const [doctors, setDoctors] = useState(mockDoctors);
-  const [medicalRecords] = useState(mockMedicalRecords);
   const [adminReports] = useState(mockAdminReports);
+
+  // Google Cloud Firebase Free Tier State
+  const [firebaseConfig, setFirebaseConfig] = useState(getActiveFirebaseConfig());
+  const [firebaseSyncStatus, setFirebaseSyncStatus] = useState({
+    isConnected: false,
+    lastSynced: null,
+    error: null,
+    isSyncing: false
+  });
 
   // Sidebar collapse toggle state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -394,23 +415,88 @@ export const AppProvider = ({ children }) => {
   // Navigation tab based on current role
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Specific doctor pre-selected for availability check
+  // Secure Role-Based Navigation Controller (Enforces strict access boundaries)
+  const setSecureActiveTab = (targetTab) => {
+    // 1. Patient boundary: Patients can ONLY access patient modules (NO EHR or staff records)
+    if (currentRole === 'patient') {
+      const allowedPatientTabs = [
+        'dashboard', 
+        'availability', 
+        'book-appointment', 
+        'appointments', 
+        'prescriptions-lab', 
+        'doctors', 
+        'profile'
+      ];
+      if (!allowedPatientTabs.includes(targetTab)) {
+        showToast('Access Denied: Outpatients do not have access to clinical EHR records or staff consoles.', 'error');
+        setActiveTab('dashboard');
+        return;
+      }
+    }
+
+    // 2. Doctor boundary
+    if (currentRole === 'doctor') {
+      const allowedDocTabs = [
+        'doc-queue',
+        'doc-patients',
+        'doc-prescriptions',
+        'doc-labs',
+        'doc-alerts',
+        'doc-speciality',
+        'doc-sync',
+        'records',
+        'doctors',
+        'appointments',
+        'prescriptions-lab'
+      ];
+      if (targetTab.startsWith('rec-') || (targetTab.startsWith('adm-') && targetTab !== 'adm-sync') || targetTab === 'clinic-desk' || targetTab === 'system-overview') {
+        showToast('Access Denied: Doctor credentials cannot access front desk admissions or user account governance.', 'error');
+        setActiveTab('doc-queue');
+        return;
+      }
+    }
+
+    // 3. Receptionist boundary
+    if (currentRole === 'receptionist') {
+      const allowedRecTabs = [
+        'rec-schedule',
+        'rec-patients',
+        'rec-visitors',
+        'rec-billing',
+        'rec-counselling',
+        'rec-sync',
+        'records',
+        'doctors',
+        'appointments'
+      ];
+      if (targetTab.startsWith('doc-') || (targetTab.startsWith('adm-') && targetTab !== 'adm-sync') || targetTab === 'clinical-queue' || targetTab === 'system-overview') {
+        showToast('Access Denied: Receptionist credentials cannot access doctor consultation or administrative user governance.', 'error');
+        setActiveTab('rec-schedule');
+        return;
+      }
+    }
+
+    setActiveTab(targetTab);
+  };
+
+  // Pre-selected doctor & slot for booking modal
   const [preselectedDoctorId, setPreselectedDoctorId] = useState(null);
   const [slotToBook, setSlotToBook] = useState(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  // Sync state to localStorage
+  // Sync state changes to localStorage
   useEffect(() => {
     localStorage.setItem('mhc_current_role', currentRole);
   }, [currentRole]);
 
   useEffect(() => {
-    localStorage.removeItem('mhc_authenticated');
-  }, []);
+    localStorage.setItem('mhc_current_patient_id', currentPatientId);
+  }, [currentPatientId]);
 
   useEffect(() => {
-    localStorage.setItem('mhc_patient_profile', JSON.stringify(patientProfile));
-  }, [patientProfile]);
+    localStorage.setItem('mhc_patients_data', JSON.stringify(patientProfiles));
+  }, [patientProfiles]);
 
   useEffect(() => {
     localStorage.setItem('mhc_staff_profiles', JSON.stringify(staffProfiles));
@@ -419,6 +505,18 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('mhc_patient_records_list', JSON.stringify(patientRecordsList));
   }, [patientRecordsList]);
+
+  useEffect(() => {
+    localStorage.setItem('mhc_user_accounts', JSON.stringify(userAccounts));
+  }, [userAccounts]);
+
+  useEffect(() => {
+    localStorage.setItem('mhc_user_passwords', JSON.stringify(userPasswords));
+  }, [userPasswords]);
+
+  useEffect(() => {
+    localStorage.setItem('mhc_doctors_list', JSON.stringify(doctors));
+  }, [doctors]);
 
   useEffect(() => {
     localStorage.setItem('mhc_counselling_sessions', JSON.stringify(counsellingSessions));
@@ -431,10 +529,6 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('mhc_audit_logs', JSON.stringify(systemAuditLogs));
   }, [systemAuditLogs]);
-
-  useEffect(() => {
-    localStorage.setItem('mhc_user_accounts', JSON.stringify(userAccounts));
-  }, [userAccounts]);
 
   useEffect(() => {
     localStorage.setItem('mhc_clinic_nodes', JSON.stringify(clinicNodes));
@@ -471,12 +565,12 @@ export const AppProvider = ({ children }) => {
     }, 4000);
   };
 
-  // Log system audit event
+  // Log system audit event (Structured Chart 0.6.4 System Log & History Management)
   const logSystemEvent = (eventType, details, severity = 'Info') => {
     const newLog = {
       id: `AUDIT-${Math.floor(1000 + Math.random() * 9000)}`,
       timestamp: new Date().toLocaleString(),
-      user: `${currentUser?.fullName || currentUser?.name || 'System User'} (${currentRole})`,
+      user: `${currentUser?.fullName || currentUser?.name || 'Authorized User'} (${currentRole})`,
       eventType,
       details,
       severity
@@ -484,157 +578,385 @@ export const AppProvider = ({ children }) => {
     setSystemAuditLogs(prev => [newLog, ...prev]);
   };
 
-  // Switch role with mandatory logout and credential re-prompt
-  const switchRoleWithLogout = (targetRole) => {
-    const normTarget = (targetRole || 'patient').toLowerCase().replace('system ', '').trim();
-    const actualTarget = normTarget === 'admin' ? 'admin' 
-      : normTarget === 'receptionist' ? 'receptionist' 
-      : normTarget === 'doctor' ? 'doctor' 
-      : 'patient';
-
-    const previousRoleLabel = currentRole === 'admin' ? 'System Admin' 
-      : currentRole === 'doctor' ? 'Doctor' 
-      : currentRole === 'receptionist' ? 'Receptionist' 
-      : 'Patient';
-
-    const targetRoleLabel = actualTarget === 'admin' ? 'System Admin' 
-      : actualTarget === 'doctor' ? 'Doctor' 
-      : actualTarget === 'receptionist' ? 'Receptionist' 
-      : 'Patient';
-
-    // Log out current session
-    setIsAuthenticated(false);
-    setCurrentRole(actualTarget);
-    
-    const notice = `Logged out from ${previousRoleLabel} profile. Please enter credentials for ${targetRoleLabel} to proceed.`;
-    setSwitchNotice(notice);
-    showToast(notice, 'info');
+  // Structured Chart 0.1.3: Password Change
+  const changePassword = (userId, newPassword) => {
+    if (!newPassword || newPassword.length < 4) {
+      showToast('Password must be at least 4 characters long.', 'error');
+      return { success: false, error: 'Password too short' };
+    }
+    setUserPasswords(prev => ({
+      ...prev,
+      [userId]: newPassword
+    }));
+    logSystemEvent('Password Change', `Password updated for account ID ${userId}`);
+    showToast(`Password updated successfully for account ${userId}.`);
+    return { success: true };
   };
 
-  // Role Switcher without logout (internal utility)
-  const switchRole = (newRole) => {
-    const norm = newRole.toLowerCase().replace('system ', '').trim();
-    const actualRole = norm === 'admin' ? 'admin' 
-      : norm === 'receptionist' ? 'receptionist' 
-      : norm === 'doctor' ? 'doctor' 
-      : 'patient';
+  // Universal Authentication & Verification
+  const login = (arg1, arg2, arg3 = null) => {
+    let identifier = '';
+    let password = '';
 
-    setCurrentRole(actualRole);
-    if (actualRole === 'admin') setActiveTab('adm-accounts');
-    else if (actualRole === 'receptionist') setActiveTab('rec-schedule');
-    else if (actualRole === 'doctor') setActiveTab('doc-queue');
-    else setActiveTab('dashboard');
-    showToast(`Switched workspace to ${actualRole.toUpperCase()} mode`, 'info');
-  };
-
-  // Multi-Role Authentication with Role, Email/ID and Password
-  const login = (roleKey, identifier, password) => {
-    const normalizedRole = (roleKey || 'patient').toLowerCase().replace('system ', '').trim();
-    const actualRole = normalizedRole === 'admin' ? 'admin' 
-      : normalizedRole === 'receptionist' ? 'receptionist'
-      : normalizedRole === 'doctor' ? 'doctor' 
-      : 'patient';
+    if (arg3 !== null) {
+      identifier = arg2;
+      password = arg3;
+    } else {
+      identifier = arg1;
+      password = arg2;
+    }
 
     const cleanId = (identifier || '').trim().toLowerCase();
     const cleanPass = (password || '').trim();
 
     if (!cleanId) {
-      return { success: false, error: 'Please enter your registered email address or ID.' };
+      return { success: false, error: 'Please enter your registered email address or User ID.' };
     }
     if (!cleanPass) {
       return { success: false, error: 'Please enter your account password.' };
     }
 
-    // Role credential configuration
-    const roleRules = {
-      admin: {
-        roleKey: 'admin',
-        title: 'System Admin',
-        defaultId: 'ADM-001',
-        defaultEmail: 'shounak.sarkar@mhc-pms.org',
-        ids: ['adm-001', 'shounak.sarkar@mhc-pms.org', 'shounak', 'admin', 'admin@mhc-pms.org', 'demo'],
-        defaultPass: 'admin123',
-        defaultTab: 'adm-accounts',
-        getName: () => staffProfiles.admin?.fullName || 'Shounak Sarkar'
-      },
-      receptionist: {
-        roleKey: 'receptionist',
-        title: 'Receptionist',
-        defaultId: 'REC-104',
-        defaultEmail: 'medha.banerjee@mhc-pms.org',
-        ids: ['rec-104', 'medha.banerjee@mhc-pms.org', 'medha', 'reception', 'receptionist@mhc-pms.org', 'demo'],
-        defaultPass: 'reception123',
-        defaultTab: 'rec-schedule',
-        getName: () => staffProfiles.receptionist?.fullName || 'Medha Banerjee'
-      },
-      doctor: {
-        roleKey: 'doctor',
-        title: 'Doctor',
-        defaultId: 'DOC-001',
-        defaultEmail: 'shashank.pandey@mhc-pms.org',
-        ids: ['doc-001', 'shashank.pandey@mhc-pms.org', 'shashank', 'doctor', 'doctor@mhc-pms.org', 'demo'],
-        defaultPass: 'doctor123',
-        defaultTab: 'doc-queue',
-        getName: () => staffProfiles.doctor?.fullName || 'Dr. Shashank Pandey'
-      },
-      patient: {
-        roleKey: 'patient',
-        title: 'Patient',
-        defaultId: 'PT-88204',
-        defaultEmail: 'aaryan.kumar@example.com',
-        ids: ['pt-88204', 'aaryan.kumar@example.com', 'aaryan', 'patient', 'patient@example.com', 'demo'],
-        defaultPass: 'patient123',
-        defaultTab: 'dashboard',
-        getName: () => patientProfile.fullName || 'Aaryan Kumar'
+    // 1. Search in userAccounts with intelligent matching
+    let matchedAccount = userAccounts.find(acc => 
+      acc.email.toLowerCase() === cleanId || 
+      acc.id.toLowerCase() === cleanId ||
+      acc.email.toLowerCase().replace('@mhc-pms.org', '@aarogyam.org') === cleanId ||
+      acc.email.toLowerCase().replace('@aarogyam.org', '@mhc-pms.org') === cleanId
+    );
+
+    // Support role-based identifier matching for staff/admin gateways
+    if (!matchedAccount) {
+      if (cleanId === 'admin' || cleanId === 'admin@aarogyam.org' || cleanId === 'adm-001' || cleanId === 'shounak.sarkar@aarogyam.org' || cleanId === 'shounak.sarkar@mhc-pms.org') {
+        matchedAccount = userAccounts.find(a => a.id === 'ADM-001') || {
+          id: 'ADM-001',
+          name: 'Shounak Sarkar',
+          email: 'admin@aarogyam.org',
+          role: 'System Admin',
+          status: 'Active'
+        };
+      } else if (cleanId === 'doctor' || cleanId === 'doctor@aarogyam.org' || cleanId === 'doc-001' || cleanId === 'shashank.pandey@aarogyam.org' || cleanId === 'shashank.pandey@mhc-pms.org' || cleanId.includes('shashank')) {
+        matchedAccount = userAccounts.find(a => a.id === 'DOC-001') || {
+          id: 'DOC-001',
+          name: 'Dr. Shashank Pandey',
+          email: 'doctor@aarogyam.org',
+          role: 'Doctor',
+          status: 'Active'
+        };
+      } else if (cleanId === 'receptionist' || cleanId === 'reception' || cleanId === 'receptionist@aarogyam.org' || cleanId === 'reception@aarogyam.org' || cleanId === 'rec-104' || cleanId === 'medha.banerjee@aarogyam.org' || cleanId === 'medha.banerjee@mhc-pms.org' || cleanId.includes('medha')) {
+        matchedAccount = userAccounts.find(a => a.id === 'REC-104') || {
+          id: 'REC-104',
+          name: 'Medha Banerjee',
+          email: 'reception@aarogyam.org',
+          role: 'Receptionist',
+          status: 'Active'
+        };
       }
+    }
+
+    if (matchedAccount) {
+      if (matchedAccount.status === 'Deactivated') {
+        return {
+          success: false,
+          error: `Account for ${matchedAccount.name} has been deactivated. Please contact hospital administration.`
+        };
+      }
+
+      const expectedPassword = userPasswords[matchedAccount.id] || 
+        userPasswords[matchedAccount.email.toLowerCase()] || 
+        (matchedAccount.role === 'Doctor' ? 'doctor123' : 
+         matchedAccount.role === 'Receptionist' ? 'reception123' : 
+         matchedAccount.role === 'System Admin' ? 'admin123' : 'patient123');
+
+      // Valid default passwords for each role
+      const validRolePasswords = {
+        'Doctor': ['doctor123', 'Doctor@Aarogyam2026', 'doctor@123', 'demo', '123456'],
+        'Receptionist': ['reception123', 'Reception@Aarogyam2026', 'reception@123', 'demo', '123456'],
+        'System Admin': ['admin123', 'Admin@Aarogyam2026', 'admin@123', 'demo', '123456'],
+        'Patient': ['patient123', 'demo', '123456']
+      };
+
+      const isPasswordValid = 
+        cleanPass === expectedPassword || 
+        cleanPass === 'demo' || 
+        cleanPass === '123456' ||
+        (validRolePasswords[matchedAccount.role] && validRolePasswords[matchedAccount.role].includes(cleanPass));
+
+      if (!isPasswordValid) {
+        return { success: false, error: 'Invalid password. Please check your credentials.' };
+      }
+
+      const normRole = matchedAccount.role.toLowerCase().replace('system ', '').trim();
+      const actualRole = normRole === 'doctor' ? 'doctor' :
+        normRole === 'receptionist' ? 'receptionist' :
+        normRole === 'admin' ? 'admin' : 'patient';
+
+      const defaultTab = actualRole === 'doctor' ? 'doc-queue' :
+        actualRole === 'receptionist' ? 'rec-schedule' :
+        actualRole === 'admin' ? 'adm-accounts' : 'dashboard';
+
+      if (actualRole === 'patient') {
+        setCurrentPatientId(matchedAccount.id);
+        if (!patientProfiles[matchedAccount.id]) {
+          const newPatientProf = {
+            id: matchedAccount.id,
+            fullName: matchedAccount.name,
+            email: matchedAccount.email,
+            phone: matchedAccount.phone || '+91 98000 00000',
+            dob: matchedAccount.dob || '2000-01-01',
+            displayDob: `${matchedAccount.dob || '2000-01-01'} (Age: ${matchedAccount.age || 24})`,
+            age: Number(matchedAccount.age) || 24,
+            gender: matchedAccount.gender || 'Not specified',
+            bloodGroup: matchedAccount.bloodGroup || 'O+',
+            address: matchedAccount.address || 'Bengaluru, KA',
+            avatar: matchedAccount.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+            emergencyContact: {
+              name: 'Emergency Contact',
+              relationship: 'Family Member',
+              phone: '+91 98000 11111'
+            },
+            insurance: { provider: 'Self Pay', policyNo: 'POL-88200', validTill: '2028-12-31' },
+            assignedDoctor: 'Dr. Shashank Pandey',
+            clinicNode: matchedAccount.clinicNode || 'Central Hospital OPD',
+            registeredSince: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+            primaryDiagnosis: 'Intake Evaluation Scheduled',
+            severity: 'Mild'
+          };
+          setPatientProfiles(prev => ({ ...prev, [matchedAccount.id]: newPatientProf }));
+        }
+      } else if (actualRole === 'doctor') {
+        setStaffProfiles(prev => ({
+          ...prev,
+          doctor: {
+            ...prev.doctor,
+            id: matchedAccount.id,
+            fullName: matchedAccount.name,
+            email: matchedAccount.email,
+            speciality: matchedAccount.speciality || prev.doctor.speciality,
+            consultationFee: matchedAccount.consultationFee || prev.doctor.consultationFee
+          }
+        }));
+      } else if (actualRole === 'receptionist') {
+        setStaffProfiles(prev => ({
+          ...prev,
+          receptionist: {
+            ...prev.receptionist,
+            id: matchedAccount.id,
+            fullName: matchedAccount.name,
+            email: matchedAccount.email
+          }
+        }));
+      } else if (actualRole === 'admin') {
+        setStaffProfiles(prev => ({
+          ...prev,
+          admin: {
+            ...prev.admin,
+            id: matchedAccount.id,
+            fullName: matchedAccount.name,
+            email: matchedAccount.email
+          }
+        }));
+      }
+
+      setIsAuthenticated(true);
+      setCurrentRole(actualRole);
+      setActiveTab(defaultTab);
+      showToast(`Welcome back, ${matchedAccount.name}! Signed in successfully.`);
+      logSystemEvent('User Login', `Authenticated as ${matchedAccount.role} (${matchedAccount.name})`);
+      return { success: true, user: matchedAccount, role: actualRole };
+    }
+
+    // 2. Check predefined default users
+    const defaultUsers = [
+      { id: 'ADM-001', email: 'shounak.sarkar@mhc-pms.org', role: 'admin', name: staffProfiles.admin?.fullName || 'Shounak Sarkar', pass: 'admin123', tab: 'adm-accounts' },
+      { id: 'DOC-001', email: 'shashank.pandey@mhc-pms.org', role: 'doctor', name: staffProfiles.doctor?.fullName || 'Dr. Shashank Pandey', pass: 'doctor123', tab: 'doc-queue' },
+      { id: 'REC-104', email: 'medha.banerjee@mhc-pms.org', role: 'receptionist', name: staffProfiles.receptionist?.fullName || 'Medha Banerjee', pass: 'reception123', tab: 'rec-schedule' },
+      { id: 'PT-88204', email: 'aaryan.kumar@example.com', role: 'patient', name: 'Aaryan Kumar', pass: 'patient123', tab: 'dashboard' },
+      { id: 'PT-88205', email: 'agniva.samaddar@example.com', role: 'patient', name: 'Agniva Samaddar', pass: 'patient123', tab: 'dashboard' }
+    ];
+
+    const defMatch = defaultUsers.find(u => 
+      u.email.toLowerCase() === cleanId || 
+      u.id.toLowerCase() === cleanId || 
+      u.name.toLowerCase() === cleanId
+    );
+
+    if (defMatch) {
+      const expectedPassword = userPasswords[defMatch.id] || defMatch.pass;
+      if (cleanPass !== expectedPassword && cleanPass !== 'demo' && cleanPass !== '123456') {
+        return { success: false, error: 'Invalid password. Please verify your credentials.' };
+      }
+
+      if (defMatch.role === 'patient') {
+        setCurrentPatientId(defMatch.id);
+      }
+
+      setIsAuthenticated(true);
+      setCurrentRole(defMatch.role);
+      setActiveTab(defMatch.tab);
+      showToast(`Welcome back, ${defMatch.name}! Signed in successfully.`);
+      logSystemEvent('User Login', `Authenticated as ${defMatch.role} (${defMatch.name})`);
+      return { success: true, user: defMatch, role: defMatch.role };
+    }
+
+    return {
+      success: false,
+      error: 'Account not found. Please check your Email / User ID or sign up for a new account.'
+    };
+  };
+
+  // Universal Account Registration (All Roles: Patient, Doctor, Receptionist, Admin)
+  const registerAccount = (data) => {
+    const role = (data.role || 'Patient').trim();
+    const cleanEmail = (data.email || '').trim().toLowerCase();
+    const fullName = (data.fullName || data.name || '').trim();
+    const password = (data.password || '').trim();
+
+    if (!fullName) return { success: false, error: 'Please enter your full name.' };
+    if (!cleanEmail) return { success: false, error: 'Please enter a valid email address.' };
+    if (!password || password.length < 6) return { success: false, error: 'Password must be at least 6 characters.' };
+
+    if (userAccounts.some(acc => acc.email.toLowerCase() === cleanEmail)) {
+      return { success: false, error: 'An account with this email address already exists. Please sign in.' };
+    }
+
+    let newId = '';
+    let normalizedRole = 'patient';
+    let roleTitle = 'Patient';
+    let defaultTab = 'dashboard';
+
+    if (role.toLowerCase().includes('doc')) {
+      newId = `DOC-${Math.floor(100 + Math.random() * 899)}`;
+      normalizedRole = 'doctor';
+      roleTitle = 'Doctor';
+      defaultTab = 'doc-queue';
+      const newDoctor = {
+        id: newId,
+        name: fullName.startsWith('Dr.') ? fullName : `Dr. ${fullName}`,
+        title: data.title || 'Consultant Psychiatrist',
+        speciality: data.speciality || 'Psychiatry & Mental Health',
+        qualification: data.qualification || 'MBBS, MD',
+        roomNumber: data.roomNumber || 'OPD Suite 204',
+        timings: '09:00 AM - 04:00 PM',
+        consultationFee: Number(data.consultationFee) || 1000,
+        avatar: data.avatar || 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300'
+      };
+      setDoctors(prev => [...prev, newDoctor]);
+      setStaffProfiles(prev => ({
+        ...prev,
+        doctor: {
+          ...prev.doctor,
+          id: newId,
+          fullName: newDoctor.name,
+          email: cleanEmail,
+          speciality: newDoctor.speciality,
+          consultationFee: newDoctor.consultationFee
+        }
+      }));
+    } else if (role.toLowerCase().includes('rec')) {
+      newId = `REC-${Math.floor(100 + Math.random() * 899)}`;
+      normalizedRole = 'receptionist';
+      roleTitle = 'Receptionist';
+      defaultTab = 'rec-schedule';
+      setStaffProfiles(prev => ({
+        ...prev,
+        receptionist: {
+          ...prev.receptionist,
+          id: newId,
+          fullName,
+          email: cleanEmail,
+          shift: data.shift || 'Morning Shift (08:00 AM - 04:00 PM)'
+        }
+      }));
+    } else if (role.toLowerCase().includes('adm')) {
+      newId = `ADM-${Math.floor(100 + Math.random() * 899)}`;
+      normalizedRole = 'admin';
+      roleTitle = 'System Admin';
+      defaultTab = 'adm-accounts';
+      setStaffProfiles(prev => ({
+        ...prev,
+        admin: {
+          ...prev.admin,
+          id: newId,
+          fullName,
+          email: cleanEmail
+        }
+      }));
+    } else {
+      // Patient
+      newId = `PT-${Math.floor(88300 + Math.random() * 699)}`;
+      normalizedRole = 'patient';
+      roleTitle = 'Patient';
+      defaultTab = 'dashboard';
+      const newPatientProfile = {
+        id: newId,
+        fullName,
+        email: cleanEmail,
+        phone: data.phone || '+91 98000 00000',
+        dob: data.dob || '2000-01-01',
+        displayDob: `${data.dob || '2000-01-01'} (Age: ${data.age || 24})`,
+        age: Number(data.age) || 24,
+        gender: data.gender || 'Not specified',
+        bloodGroup: data.bloodGroup || 'O+',
+        address: data.address || 'Bengaluru, KA',
+        avatar: data.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
+        emergencyContact: {
+          name: data.emergencyName || 'Emergency Contact',
+          relationship: 'Family Member',
+          phone: data.emergencyPhone || '+91 98000 11111'
+        },
+        insurance: {
+          provider: data.insuranceProvider || 'Self Pay',
+          policyNo: 'POL-' + Math.floor(100000 + Math.random() * 900000),
+          validTill: '2028-12-31'
+        },
+        assignedDoctor: 'Dr. Shashank Pandey',
+        clinicNode: 'Central Hospital OPD',
+        registeredSince: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+        primaryDiagnosis: 'Intake Evaluation Scheduled',
+        severity: 'Mild'
+      };
+
+      setPatientProfiles(prev => ({ ...prev, [newId]: newPatientProfile }));
+      setPatientRecordsList(prev => [newPatientProfile, ...prev]);
+      setCurrentPatientId(newId);
+    }
+
+    const newAccount = {
+      id: newId,
+      name: fullName,
+      email: cleanEmail,
+      role: roleTitle,
+      status: 'Active',
+      clinicNode: 'Central Hospital OPD',
+      lastLogin: 'Just now',
+      phone: data.phone || '',
+      age: data.age || '',
+      bloodGroup: data.bloodGroup || '',
+      registeredAt: new Date().toISOString()
     };
 
-    const targetRule = roleRules[actualRole];
+    setUserAccounts(prev => [newAccount, ...prev]);
+    setUserPasswords(prev => ({
+      ...prev,
+      [newId]: password,
+      [cleanEmail]: password
+    }));
 
-    // Check against userAccounts registry
-    const registeredAccount = userAccounts.find(acc => {
-      const accRoleNorm = acc.role.toLowerCase().replace('system ', '').trim();
-      const isRoleMatch = accRoleNorm === actualRole;
-      const isIdMatch = acc.id.toLowerCase() === cleanId || acc.email.toLowerCase() === cleanId;
-      return isRoleMatch && isIdMatch;
-    });
-
-    if (registeredAccount && registeredAccount.status === 'Deactivated') {
-      return {
-        success: false,
-        error: `Account for ${registeredAccount.name} has been deactivated by the System Admin. Please contact IT Administration.`
-      };
-    }
-
-    const isMatch = targetRule.ids.includes(cleanId) || cleanId === 'demo' || (registeredAccount !== undefined);
-    const isPassValid = cleanPass === targetRule.defaultPass || cleanPass === 'demo' || cleanPass === '123456';
-
-    if (!isMatch || !isPassValid) {
-      return {
-        success: false,
-        error: `Invalid credentials for ${targetRule.title}. Use Email: ${targetRule.defaultEmail} and Password: ${targetRule.defaultPass}`
-      };
-    }
-
-    setIsAuthenticated(true);
-    setCurrentRole(actualRole);
-    setActiveTab(targetRule.defaultTab);
-    const welcomeName = registeredAccount ? registeredAccount.name : targetRule.getName();
-    showToast(`Welcome back, ${welcomeName}! Signed in as ${targetRule.title}.`);
-    logSystemEvent('User Login', `User authenticated as ${targetRule.title} (${welcomeName})`);
-    return { success: true };
+    logSystemEvent('Account Created', `New ${roleTitle} registered: ${fullName} (${cleanEmail})`);
+    return { success: true, account: newAccount, id: newId, role: normalizedRole, defaultTab };
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setPublicView('landing');
     showToast('You have been logged out securely.', 'info');
   };
 
-  // Self-Registration for Patients
+  // Structured Chart 0.1.1: New Registration for Patients
   const registerPatient = (patientData) => {
-    const newId = `PT-${Math.floor(88200 + Math.random() * 800)}`;
+    const newId = `PT-${Math.floor(88300 + Math.random() * 699)}`;
     const newProfile = {
-      ...mockPatientProfile,
+      ...mockPatients["PT-88204"],
       id: newId,
       fullName: patientData.fullName,
       email: patientData.email,
@@ -642,29 +964,50 @@ export const AppProvider = ({ children }) => {
       age: Number(patientData.age) || 24,
       gender: patientData.gender || 'Not specified',
       bloodGroup: patientData.bloodGroup || 'B+',
-      registeredDate: new Date().toISOString().split('T')[0]
+      dob: patientData.dob || '2002-01-01',
+      displayDob: `${patientData.dob || '2002-01-01'} (Age: ${patientData.age || 24})`,
+      address: patientData.address || 'Bengaluru, KA',
+      emergencyContact: {
+        name: patientData.emergencyName || 'Next of Kin',
+        relationship: 'Family Contact',
+        phone: patientData.emergencyPhone || '+91 98765 11111'
+      },
+      avatar: patientData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300',
+      registeredSince: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      primaryDiagnosis: 'Intake Evaluation Scheduled',
+      severity: 'Mild',
+      assignedDoctor: 'Dr. Shashank Pandey',
+      clinicNode: 'Central Hospital OPD',
+      activeStatus: 'Active Outpatient'
     };
-    setPatientProfile(newProfile);
+
+    setPatientProfiles(prev => ({
+      ...prev,
+      [newId]: newProfile
+    }));
+
+    setCurrentPatientId(newId);
 
     // Add to patient records registry
     setPatientRecordsList(prev => [{
       id: newId,
       fullName: patientData.fullName,
-      dob: '2002-01-01',
-      age: Number(patientData.age) || 24,
-      gender: patientData.gender || 'Not specified',
-      bloodGroup: patientData.bloodGroup || 'B+',
-      phone: patientData.phone || '+91 98765 43210',
-      email: patientData.email,
-      address: 'Bengaluru, KA',
-      emergencyContact: 'Self / Next of Kin',
+      dob: newProfile.dob,
+      age: newProfile.age,
+      gender: newProfile.gender,
+      bloodGroup: newProfile.bloodGroup,
+      phone: newProfile.phone,
+      email: newProfile.email,
+      address: newProfile.address,
+      emergencyContact: `${newProfile.emergencyContact.name} - ${newProfile.emergencyContact.phone}`,
       assignedDoctor: 'Dr. Shashank Pandey',
-      primaryDiagnosis: 'Intake Evaluation Pending',
+      primaryDiagnosis: 'Intake Evaluation Scheduled',
       severity: 'Mild',
       clinicNode: 'Central Hospital OPD',
       registeredDate: new Date().toISOString().split('T')[0],
-      insuranceProvider: 'Self Pay / General Outpatient',
-      activeStatus: 'Active Outpatient'
+      insuranceProvider: 'Self-Pay / Registered Outpatient',
+      activeStatus: 'Active Outpatient',
+      avatar: newProfile.avatar
     }, ...prev]);
 
     // Add to user accounts registry
@@ -675,15 +1018,24 @@ export const AppProvider = ({ children }) => {
       role: 'Patient',
       status: 'Active',
       registeredDate: new Date().toISOString().split('T')[0],
-      lastLogin: 'Never',
+      lastLogin: 'Just now',
       clinicNode: 'Central Hospital OPD'
     }, ...prev]);
 
-    showToast(`Account registered successfully! Welcome, ${patientData.fullName}. You can now sign in as Patient.`);
+    // Register password
+    if (patientData.password) {
+      setUserPasswords(prev => ({
+        ...prev,
+        [newId]: patientData.password
+      }));
+    }
+
+    showToast(`Account registered successfully! Welcome, ${patientData.fullName}.`);
+    logSystemEvent('New Patient Registration', `Self-registered new patient: ${patientData.fullName} (${newId})`);
     return { success: true, id: newId, email: patientData.email };
   };
 
-  // Receptionist & Doctor: Create and Add Patient Record
+  // Structured Chart 0.2.1 & 0.2.3: Retrieve / Update Patient Records
   const addPatientRecord = (patientData) => {
     const newId = `PT-${Math.floor(88300 + Math.random() * 699)}`;
     const newRecord = {
@@ -697,13 +1049,14 @@ export const AppProvider = ({ children }) => {
       email: patientData.email || `${patientData.fullName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
       address: patientData.address || 'Bengaluru, Karnataka',
       emergencyContact: patientData.emergencyContact || 'Family Contact - +91 98000 22222',
-      assignedDoctor: patientData.assignedDoctor || 'Dr. Shashank Pandey',
+      assignedDoctor: 'Dr. Shashank Pandey',
       primaryDiagnosis: patientData.primaryDiagnosis || 'Initial Psychiatric Intake',
       severity: patientData.severity || 'Moderate',
       clinicNode: patientData.clinicNode || 'Central Hospital OPD',
       registeredDate: new Date().toISOString().split('T')[0],
       insuranceProvider: patientData.insuranceProvider || 'Self-Sponsored Outpatient',
-      activeStatus: 'Active Outpatient'
+      activeStatus: 'Active Outpatient',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300'
     };
 
     setPatientRecordsList(prev => [newRecord, ...prev]);
@@ -720,9 +1073,57 @@ export const AppProvider = ({ children }) => {
       clinicNode: newRecord.clinicNode
     }, ...prev]);
 
+    // Create profile entry
+    setPatientProfiles(prev => ({
+      ...prev,
+      [newId]: {
+        ...mockPatients["PT-88204"],
+        ...newRecord
+      }
+    }));
+
     showToast(`Electronic Patient Record created for ${newRecord.fullName} (ID: ${newId})`);
     logSystemEvent('Patient Record Created', `New patient record registered: ${newRecord.fullName} (${newId})`);
     return newRecord;
+  };
+
+  // Universal Authority (Admin): Edit ANY user account credentials, details, password, role, status
+  const updateAnyUserAccount = (userId, updatedFields) => {
+    setUserAccounts(prev => prev.map(acc => {
+      if (acc.id === userId) {
+        const updated = { ...acc, ...updatedFields };
+        return updated;
+      }
+      return acc;
+    }));
+
+    // If password was updated
+    if (updatedFields.password) {
+      setUserPasswords(prev => ({
+        ...prev,
+        [userId]: updatedFields.password
+      }));
+    }
+
+    // Also update if it's a patient record
+    if (patientProfiles[userId]) {
+      setPatientProfiles(prev => ({
+        ...prev,
+        [userId]: {
+          ...prev[userId],
+          fullName: updatedFields.name || prev[userId].fullName,
+          email: updatedFields.email || prev[userId].email
+        }
+      }));
+      setPatientRecordsList(prev => prev.map(p => p.id === userId ? {
+        ...p,
+        fullName: updatedFields.name || p.fullName,
+        email: updatedFields.email || p.email
+      } : p));
+    }
+
+    showToast(`Account ${userId} credentials & profile updated by Admin Universal Governance.`);
+    logSystemEvent('Admin Universal Account Edit', `System Admin updated credentials/details for ${userId}`);
   };
 
   // Add User Account (Admin)
@@ -743,18 +1144,25 @@ export const AppProvider = ({ children }) => {
 
     setUserAccounts(prev => [fullAccount, ...prev]);
 
-    // If a Doctor is added, register into the specialist directory
+    if (newAccount.password) {
+      setUserPasswords(prev => ({
+        ...prev,
+        [newId]: newAccount.password
+      }));
+    }
+
+    // If adding a doctor
     if (newAccount.role === 'Doctor') {
       const formattedDoc = {
         id: newId,
         name: newAccount.name.startsWith('Dr.') ? newAccount.name : `Dr. ${newAccount.name}`,
         title: newAccount.speciality ? `Consultant - ${newAccount.speciality}` : 'Consultant Psychiatrist',
-        speciality: newAccount.speciality || 'General Psychiatry',
+        speciality: newAccount.speciality || 'Psychiatrist',
         qualification: newAccount.qualifications || 'MBBS, MD (Psychiatry)',
         experience: '7+ Years Clinical Experience',
         rating: 4.9,
         reviewCount: 18,
-        avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300',
+        avatar: newAccount.avatar || 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300',
         languages: ['English', 'Hindi'],
         consultationFee: Number(newAccount.consultationFee) || 1200,
         roomNumber: 'OPD Suite 209',
@@ -777,22 +1185,48 @@ export const AppProvider = ({ children }) => {
     return fullAccount;
   };
 
-  // Appointments - Book
+  // Structured Chart 0.3.1: Book Appointment
   const bookNewAppointment = (appointmentData) => {
     const newId = `APT-${Math.floor(1000 + Math.random() * 9000)}`;
     const newAppointment = {
       id: newId,
-      ...appointmentData,
+      patientId: currentPatientId,
+      patientName: patientProfile.fullName,
+      doctorId: "DOC-001",
+      doctorName: "Dr. Shashank Pandey",
+      doctorSpeciality: "Psychiatrist",
+      doctorAvatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
+      location: "OPD Suite 204, East Wing",
       status: 'Upcoming',
-      bookingDate: new Date().toISOString().split('T')[0]
+      bookingDate: new Date().toISOString().split('T')[0],
+      displayDate: new Date(appointmentData.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      ...appointmentData
     };
 
     setAppointments(prev => [newAppointment, ...prev]);
-    showToast(`Appointment ${newId} confirmed successfully with ${appointmentData.doctorName}!`);
+    showToast(`Appointment ${newId} confirmed successfully with ${newAppointment.doctorName}!`);
+    logSystemEvent('Appointment Booked', `Booked consultation ${newId} for ${newAppointment.patientName}`);
     return newAppointment;
   };
 
-  // Appointments - Reschedule
+  // Structured Chart 0.3.3: Cancel Appointment
+  const cancelAppointment = (appointmentId, reason = 'Cancelled by Patient') => {
+    setAppointments(prev => prev.map(apt => {
+      if (apt.id === appointmentId) {
+        return {
+          ...apt,
+          status: 'Cancelled',
+          cancellationReason: reason,
+          cancelledAt: new Date().toLocaleString()
+        };
+      }
+      return apt;
+    }));
+    showToast(`Appointment ${appointmentId} has been cancelled.`, 'info');
+    logSystemEvent('Appointment Cancelled', `Appointment ${appointmentId} cancelled: ${reason}`);
+  };
+
+  // Reschedule Appointment
   const rescheduleAppointment = (appointmentId, newDate, newTime, newSlotPeriod = 'Morning', reason = 'Rescheduled by Reception') => {
     setAppointments(prev => prev.map(apt => {
       if (apt.id === appointmentId) {
@@ -813,27 +1247,13 @@ export const AppProvider = ({ children }) => {
     }));
   };
 
-  // Appointments - Cancel
-  const cancelAppointment = (appointmentId, reason = 'Cancelled by Patient') => {
-    setAppointments(prev => prev.map(apt => {
-      if (apt.id === appointmentId) {
-        return {
-          ...apt,
-          status: 'Cancelled',
-          cancellationReason: reason,
-          cancelledAt: new Date().toLocaleString()
-        };
-      }
-      return apt;
-    }));
-    showToast(`Appointment ${appointmentId} has been cancelled.`, 'info');
-  };
-
   // Receptionist: Allot Counselling Session
   const allotCounsellingSession = (sessionData) => {
     const newId = `CNS-2026-${Math.floor(700 + Math.random() * 299)}`;
     const newSession = {
       sessionId: newId,
+      therapistName: 'Dr. Shashank Pandey',
+      therapistRole: 'Chief Consultant Psychiatrist',
       status: 'Confirmed',
       allottedBy: `${staffProfiles.receptionist?.fullName || 'Medha Banerjee'} (Receptionist)`,
       allottedDate: new Date().toISOString().split('T')[0],
@@ -842,7 +1262,7 @@ export const AppProvider = ({ children }) => {
     };
 
     setCounsellingSessions(prev => [newSession, ...prev]);
-    showToast(`Counselling session allotted for ${sessionData.patientName} with ${sessionData.therapistName}! (ID: ${newId})`);
+    showToast(`Counselling session allotted for ${sessionData.patientName} with ${newSession.therapistName}! (ID: ${newId})`);
     return newSession;
   };
 
@@ -856,16 +1276,51 @@ export const AppProvider = ({ children }) => {
     showToast(`Counselling session ${sessionId} has been cancelled.`, 'info');
   };
 
-  // Patient Profile updates
+  // Patient Profile updates (Photos & Details Editable by Individual Login)
   const updateProfile = (updatedData) => {
-    setPatientProfile(prev => ({
+    setPatientProfiles(prev => ({
       ...prev,
-      ...updatedData
+      [currentPatientId]: {
+        ...prev[currentPatientId],
+        ...updatedData
+      }
     }));
-    showToast('Patient profile updated successfully!');
+
+    // Update patientRecordsList
+    setPatientRecordsList(prev => prev.map(p => {
+      if (p.id === currentPatientId) {
+        return {
+          ...p,
+          fullName: updatedData.fullName || p.fullName,
+          phone: updatedData.phone || p.phone,
+          email: updatedData.email || p.email,
+          address: updatedData.address || p.address,
+          avatar: updatedData.avatar || p.avatar,
+          bloodGroup: updatedData.bloodGroup || p.bloodGroup,
+          age: updatedData.age || p.age,
+          gender: updatedData.gender || p.gender
+        };
+      }
+      return p;
+    }));
+
+    // Update userAccounts
+    setUserAccounts(prev => prev.map(a => {
+      if (a.id === currentPatientId) {
+        return {
+          ...a,
+          name: updatedData.fullName || a.name,
+          email: updatedData.email || a.email
+        };
+      }
+      return a;
+    }));
+
+    showToast('Personal profile and photo updated successfully!');
+    logSystemEvent('Profile Updated', `Patient ${patientProfile.fullName} updated personal details/photo.`);
   };
 
-  // Doctor Profile & Speciality updates
+  // Structured Chart 0.5.3: Update Doctor Profile (Photos & Details Editable by Doctor)
   const updateDoctorProfile = (updatedData) => {
     setStaffProfiles(prev => ({
       ...prev,
@@ -874,38 +1329,120 @@ export const AppProvider = ({ children }) => {
         ...updatedData
       }
     }));
+
     setDoctors(prev => prev.map(doc => {
       if (doc.id === 'DOC-001') {
         return {
           ...doc,
           name: updatedData.fullName || doc.name,
-          speciality: updatedData.title || doc.speciality,
+          title: updatedData.title || doc.title,
+          speciality: updatedData.speciality || doc.speciality,
           qualifications: updatedData.qualifications || doc.qualifications,
-          fee: updatedData.consultationFee ? Number(updatedData.consultationFee) : doc.fee,
+          consultationFee: updatedData.consultationFee ? Number(updatedData.consultationFee) : doc.consultationFee,
+          roomNumber: updatedData.opdRoom || doc.roomNumber,
           timings: updatedData.schedule || doc.timings,
-          bio: updatedData.bio || doc.bio
+          bio: updatedData.bio || doc.bio,
+          avatar: updatedData.avatar || doc.avatar
         };
       }
       return doc;
     }));
-    showToast('Doctor credentials & clinical information updated successfully!');
+
+    // Update userAccounts for Doctor
+    setUserAccounts(prev => prev.map(a => {
+      if (a.id === 'DOC-001' || a.role === 'doctor') {
+        return {
+          ...a,
+          name: updatedData.fullName || a.name,
+          email: updatedData.email || a.email
+        };
+      }
+      return a;
+    }));
+
+    showToast('Doctor credentials, clinical schedule & photo updated successfully!');
+    logSystemEvent('Doctor Profile Updated', `Doctor updated clinical profile & photo.`);
   };
 
-  // Doctor: Prescriptions
+  // Receptionist Profile updates (Photos & Details Editable by Receptionist)
+  const updateReceptionistProfile = (updatedData) => {
+    setStaffProfiles(prev => ({
+      ...prev,
+      receptionist: {
+        ...prev.receptionist,
+        ...updatedData
+      }
+    }));
+
+    // Update userAccounts for Receptionist
+    setUserAccounts(prev => prev.map(a => {
+      if (a.id === 'REC-104' || a.role === 'receptionist') {
+        return {
+          ...a,
+          name: updatedData.fullName || a.name,
+          email: updatedData.email || a.email
+        };
+      }
+      return a;
+    }));
+
+    showToast('Front Desk profile and photo updated successfully!');
+    logSystemEvent('Receptionist Profile Updated', `Receptionist updated front-desk details & photo.`);
+  };
+
+  // Admin Profile updates (Photos & Details Editable by Admin)
+  const updateAdminProfile = (updatedData) => {
+    setStaffProfiles(prev => ({
+      ...prev,
+      admin: {
+        ...prev.admin,
+        ...updatedData
+      }
+    }));
+
+    // Update userAccounts for Admin
+    setUserAccounts(prev => prev.map(a => {
+      if (a.id === 'ADM-001' || a.role === 'admin') {
+        return {
+          ...a,
+          name: updatedData.fullName || a.name,
+          email: updatedData.email || a.email
+        };
+      }
+      return a;
+    }));
+
+    showToast('System Administrator profile updated successfully!');
+    logSystemEvent('Admin Profile Updated', `Admin updated administrative governance profile & photo.`);
+  };
+
+  // Structured Chart 0.4.3: Process Prescription Details (Doctor)
   const addNewPrescription = (newRxData) => {
     const newId = `RX-2026-${Math.floor(100 + Math.random() * 900)}`;
     const newRecord = {
       id: newId,
-      ...newRxData,
-      doctorName: staffProfiles.doctor.fullName,
-      doctorTitle: staffProfiles.doctor.title,
-      date: new Date().toISOString().split('T')[0],
-      displayDate: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
-      status: 'Active'
+      doctor: staffProfiles.doctor.fullName,
+      doctorSpeciality: staffProfiles.doctor.title,
+      date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      validUntil: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      status: 'Active',
+      instructionsGeneral: newRxData.instructions || 'Take medications as directed post-meals with water.',
+      medicines: [
+        {
+          name: newRxData.medicineName,
+          strength: newRxData.dosage,
+          dosage: '1 Tablet',
+          frequency: newRxData.frequency,
+          duration: newRxData.duration,
+          instructions: newRxData.instructions,
+          refillsRemaining: Number(newRxData.refills) || 1
+        }
+      ],
+      ...newRxData
     };
 
     setPrescriptions(prev => [newRecord, ...prev]);
-    showToast(`Prescription ${newId} for ${newRxData.medicineName} signed and added to patient record!`);
+    showToast(`Prescription ${newId} signed and added to EHR!`);
     logSystemEvent('Prescription Issued', `Doctor issued e-Rx ${newId} (${newRxData.medicineName}) for ${newRxData.patientName}`);
     return newRecord;
   };
@@ -922,33 +1459,36 @@ export const AppProvider = ({ children }) => {
       return rx;
     }));
     showToast(`Prescription ${rxId} updated successfully.`, 'success');
-    logSystemEvent('Prescription Modified', `Doctor updated treatment regimen for ${rxId} (${updatedData.medicineName || 'Medication'})`);
+    logSystemEvent('Prescription Modified', `Doctor updated treatment regimen for ${rxId}`);
   };
 
-  // Doctor: Order Lab / Psychometric Test
+  // Structured Chart 0.4.4: Process Lab Record Details (Doctor)
   const orderLabTest = (testData) => {
     const newId = `LAB-2026-${Math.floor(800 + Math.random() * 199)}`;
     const newLab = {
       id: newId,
       testName: testData.testName,
       category: testData.category || 'Psychometric Scale',
-      orderedBy: staffProfiles.doctor.fullName,
-      patientId: testData.patientId || 'PT-88204',
-      patientName: testData.patientName || 'Aaryan Kumar',
-      date: new Date().toISOString().split('T')[0],
-      displayDate: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      doctor: staffProfiles.doctor.fullName,
+      labName: 'MHC Central Pathology & Diagnostics Lab',
+      patientId: testData.patientId || currentPatientId,
+      patientName: testData.patientName || patientProfile.fullName,
+      testDate: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
       status: 'Ordered / Sample Queued',
-      score: 'Pending Clinical Execution',
-      severity: testData.urgency || 'Routine',
-      interpretation: testData.clinicalRationale || 'Investigative order placed by attending clinician.'
+      resultSummary: testData.clinicalRationale || 'Investigative order placed by attending clinician.',
+      parameters: [
+        { name: testData.testName, value: 'Processing', normalRange: 'Pending', status: 'Pending' }
+      ],
+      verifiedBy: `${staffProfiles.doctor.fullName}, MD`
     };
 
     setLabRecords(prev => [newLab, ...prev]);
     showToast(`Diagnostic order ${newId} (${testData.testName}) placed successfully!`);
+    logSystemEvent('Lab Test Ordered', `Doctor ordered ${testData.testName} for ${newLab.patientName}`);
     return newLab;
   };
 
-  // Doctor: Update Patient Risk Alert
+  // Structured Chart 0.2.2: Evaluate Risk Alert
   const updatePatientRiskAlert = (riskData) => {
     const newAlert = {
       id: `RISK-${Math.floor(200 + Math.random() * 799)}`,
@@ -958,7 +1498,7 @@ export const AppProvider = ({ children }) => {
     };
 
     setPatientRiskAlerts(prev => [newAlert, ...prev.filter(r => r.patientId !== riskData.patientId)]);
-    showToast(`Clinical risk alert updated for ${riskData.patientName} (${riskData.riskLevel} Risk)!`, riskData.riskLevel === 'High' ? 'warning' : 'success');
+    showToast(`Clinical risk alert updated for ${riskData.patientName}!`, riskData.riskLevel === 'High' ? 'warning' : 'success');
   };
 
   // Admin: User Account Management (Activate / Deactivate)
@@ -974,7 +1514,7 @@ export const AppProvider = ({ children }) => {
     }));
   };
 
-  // Admin: Synchronize Clinics
+  // Structured Chart 0.6.1: Cross-Clinic Data Synchronization Management
   const triggerClinicSync = (nodeId = null) => {
     setClinicNodes(prev => prev.map(node => {
       if (!nodeId || node.id === nodeId) {
@@ -1010,11 +1550,13 @@ export const AppProvider = ({ children }) => {
       receiptNumber: `REC-${Math.floor(99000 + Math.random() * 999)}`,
       date: new Date().toISOString().split('T')[0],
       status: 'Paid',
+      receptionistName: staffProfiles.receptionist.fullName,
       paymentTimestamp: new Date().toLocaleString(),
       ...invoiceData
     };
     setBillingInvoices(prev => [newInvoice, ...prev]);
     showToast(`Payment of ₹${invoiceData.amount} processed for ${invoiceData.patientName}! Receipt ${newInvoice.receiptNumber} issued.`);
+    logSystemEvent('Payment Received', `Processed ₹${invoiceData.amount} for ${invoiceData.patientName} (${newInvoice.receiptNumber})`);
     return newInvoice;
   };
 
@@ -1043,6 +1585,7 @@ export const AppProvider = ({ children }) => {
     showToast(`Visitor log status updated to ${newStatus}.`);
   };
 
+  // Structured Chart 0.5.5: Retrieve Doctor Availability
   const navigateToCheckAvailability = (doctorId = null) => {
     if (doctorId) {
       setPreselectedDoctorId(doctorId);
@@ -1055,7 +1598,98 @@ export const AppProvider = ({ children }) => {
     setIsBookingModalOpen(true);
   };
 
-  // Dynamic profile based on current active role
+  // Google Cloud Firebase Free Tier Config & Sync Methods
+  const updateFirebaseConfiguration = (newConfig) => {
+    saveActiveFirebaseConfig(newConfig);
+    setFirebaseConfig(newConfig);
+    showToast('Firebase Cloud settings updated successfully!');
+    logSystemEvent('Firebase Config Updated', `Configured project ID: ${newConfig.projectId || 'None'}`);
+  };
+
+  const testFirebaseConnectionAsync = async (customConfig = null) => {
+    const configToTest = customConfig || firebaseConfig;
+    const res = await testFirebaseConnection(configToTest);
+    if (res.success) {
+      setFirebaseSyncStatus(prev => ({ ...prev, isConnected: true, error: null }));
+      showToast('Connected to Google Cloud Firebase (Spark Free Tier)!');
+      logSystemEvent('Firebase Spark Connected', `Validated Firestore link for project: ${configToTest.projectId}`);
+      return { success: true };
+    } else {
+      setFirebaseSyncStatus(prev => ({ ...prev, isConnected: false, error: res.error }));
+      showToast(`Firebase ping failed: ${res.error}`, 'error');
+      return { success: false, error: res.error };
+    }
+  };
+
+  const syncAllCollectionsToFirebase = async () => {
+    const config = getActiveFirebaseConfig();
+    const projectId = config.projectId || "aarogyam-mhc-pms-firestore";
+
+    setFirebaseSyncStatus(prev => ({ ...prev, isSyncing: true }));
+    showToast('Synchronizing all collections to Google Cloud Firebase (Spark Plan)...');
+    try {
+      const pRes = await syncCollectionToFirestore('patients', patientRecordsList);
+      const aRes = await syncCollectionToFirestore('appointments', appointments);
+      const rxRes = await syncCollectionToFirestore('prescriptions', prescriptions);
+      const lRes = await syncCollectionToFirestore('lab_records', labRecords);
+      const invRes = await syncCollectionToFirestore('billing_invoices', billingInvoices);
+      const visRes = await syncCollectionToFirestore('waiting_visitors', waitingVisitors);
+      const accRes = await syncCollectionToFirestore('user_accounts', userAccounts);
+
+      const totalSynced = (pRes.syncedCount || 0) + (aRes.syncedCount || 0) + (rxRes.syncedCount || 0) + 
+                          (lRes.syncedCount || 0) + (invRes.syncedCount || 0) + (visRes.syncedCount || 0) + (accRes.syncedCount || 0);
+
+      const syncTimestamp = new Date().toLocaleTimeString();
+      setFirebaseSyncStatus({ isConnected: true, lastSynced: syncTimestamp, error: null, isSyncing: false });
+      showToast(`Cloud Sync Complete: ${totalSynced} healthcare documents backed up to Firebase Firestore!`);
+      logSystemEvent('Firebase Spark Sync', `Exported ${totalSynced} records to Firestore Cloud Database`);
+      return { success: true, totalSynced };
+    } catch (err) {
+      setFirebaseSyncStatus(prev => ({ ...prev, isSyncing: false, error: err.message }));
+      showToast(`Firebase sync failed: ${err.message}`, 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Microsoft Excel Multi-Sheet Export Engine
+  const exportMasterDatabaseToExcel = () => {
+    try {
+      const res = exportFullMHCWorkbook({
+        patientRecords: patientRecordsList,
+        appointments,
+        prescriptions,
+        labRecords,
+        billingInvoices,
+        waitingVisitors,
+        userAccounts,
+        auditLogs: systemAuditLogs
+      });
+      showToast(`Master Excel workbook exported successfully (${res.fileName})!`);
+      logSystemEvent('Excel Export', `Generated multi-tab Excel spreadsheet: ${res.fileName} with 8 sheets`);
+      return res;
+    } catch (err) {
+      showToast(`Excel export error: ${err.message}`, 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  const exportCollectionToCsv = (collectionName, items) => {
+    try {
+      const res = exportSingleCollectionToCsv(collectionName, items);
+      if (res.success) {
+        showToast(`Exported ${collectionName} table to CSV (${res.fileName})!`);
+        logSystemEvent('CSV Export', `Exported ${collectionName} records to CSV format`);
+      } else {
+        showToast(res.message || 'No items to export', 'warning');
+      }
+      return res;
+    } catch (err) {
+      showToast(`Export error: ${err.message}`, 'error');
+      return { success: false, error: err.message };
+    }
+  };
+
+  // Current active user identity based on active role
   const currentUser = currentRole === 'patient' 
     ? patientProfile 
     : staffProfiles[currentRole] || patientProfile;
@@ -1063,31 +1697,31 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        publicView,
+        setPublicView,
         currentRole,
         setCurrentRole,
-        switchRole,
-        switchRoleWithLogout,
-        switchNotice,
-        setSwitchNotice,
+        currentPatientId,
+        setCurrentPatientId,
+        patientProfiles,
+        patientProfile,
+        medicalRecords,
         currentUser,
         isAuthenticated,
         login,
         logout,
-        patientProfile,
+        registerAccount,
+        changePassword,
         updateProfile,
         registerPatient,
         patientRecordsList,
         addPatientRecord,
-        counsellingSessions,
-        allotCounsellingSession,
-        cancelCounsellingSession,
-        patientRiskAlerts,
-        updatePatientRiskAlert,
-        systemAuditLogs,
-        logSystemEvent,
+        updateAnyUserAccount,
         staffProfiles,
         doctorProfile: staffProfiles.doctor,
         updateDoctorProfile,
+        updateReceptionistProfile,
+        updateAdminProfile,
         userAccounts,
         addUserAccount,
         toggleUserAccountStatus,
@@ -1105,8 +1739,15 @@ export const AppProvider = ({ children }) => {
         bookNewAppointment,
         rescheduleAppointment,
         cancelAppointment,
+        counsellingSessions,
+        allotCounsellingSession,
+        cancelCounsellingSession,
+        patientRiskAlerts,
+        updatePatientRiskAlert,
+        systemAuditLogs,
+        logSystemEvent,
         activeTab,
-        setActiveTab,
+        setActiveTab: setSecureActiveTab,
         preselectedDoctorId,
         setPreselectedDoctorId,
         navigateToCheckAvailability,
@@ -1116,7 +1757,6 @@ export const AppProvider = ({ children }) => {
         setIsBookingModalOpen,
         openBookingForSlot,
         doctors,
-        medicalRecords,
         prescriptions,
         addNewPrescription,
         updatePrescription,
@@ -1126,7 +1766,14 @@ export const AppProvider = ({ children }) => {
         setIsSidebarCollapsed,
         toggleSidebar: () => setIsSidebarCollapsed(prev => !prev),
         toast,
-        showToast
+        showToast,
+        firebaseConfig,
+        firebaseSyncStatus,
+        updateFirebaseConfiguration,
+        testFirebaseConnectionAsync,
+        syncAllCollectionsToFirebase,
+        exportMasterDatabaseToExcel,
+        exportCollectionToCsv
       }}
     >
       {children}

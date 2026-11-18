@@ -28,9 +28,11 @@ import {
   UserCog,
   BarChart3,
   RefreshCw,
-  BellRing
+  BellRing,
+  Edit3
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { AarogyamLogo } from '../common/AarogyamLogo';
 
 export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const { 
@@ -38,14 +40,11 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     setActiveTab, 
     logout, 
     currentRole,
-    switchRoleWithLogout,
     currentUser,
     appointments,
     isSidebarCollapsed,
     setIsSidebarCollapsed 
   } = useApp();
-
-  const [isSwitchModalOpen, setIsSwitchModalOpen] = useState(false);
 
   const upcomingCount = appointments.filter(a => a.status === 'Upcoming').length;
 
@@ -59,12 +58,6 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     setIsSidebarCollapsed(true);
   };
 
-  const handleSwitchRole = (targetRole) => {
-    setIsSwitchModalOpen(false);
-    if (setIsMobileOpen) setIsMobileOpen(false);
-    switchRoleWithLogout(targetRole);
-  };
-
   // Define role-specific navigation menus with explicit use case features
   const getNavSections = () => {
     if (currentRole === 'doctor') {
@@ -73,7 +66,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           title: 'CLINICAL USE CASES',
           items: [
             { id: 'doc-queue', label: 'Consultation Queue', icon: Clock, badge: upcomingCount > 0 ? upcomingCount : null },
-            { id: 'doc-patients', label: 'Psychiatric EHR & Summaries', icon: FileText },
+            { id: 'doc-patients', label: 'Psychiatric EHR Dossiers', icon: FileText },
             { id: 'doc-prescriptions', label: 'e-Prescribing & Treatments', icon: Pill },
             { id: 'doc-labs', label: 'Diagnostic & Lab Scales', icon: FlaskConical },
             { id: 'doc-alerts', label: 'Health Risk Alerts', icon: ShieldAlert, highlight: true },
@@ -81,10 +74,17 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           ]
         },
         {
-          title: 'HOSPITAL REGISTRIES',
+          title: 'HOSPITAL EHR & DATABASE',
           items: [
-            { id: 'records', label: 'Master Patient Registry', icon: FileSpreadsheet },
+            { id: 'records', label: 'EHR Records (Excel Database)', icon: FileSpreadsheet, highlight: true },
+            { id: 'doc-sync', label: 'Cloud & Database Sync', icon: RefreshCw },
             { id: 'doctors', label: 'Specialist Directory', icon: Users }
+          ]
+        },
+        {
+          title: 'ACCOUNT & IDENTITY',
+          items: [
+            { id: 'profile', label: 'Doctor Profile & Photo', icon: User }
           ]
         }
       ];
@@ -103,10 +103,17 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           ]
         },
         {
-          title: 'CLINIC RESOURCES',
+          title: 'HOSPITAL EHR & DATABASE',
           items: [
-            { id: 'records', label: 'Master Patient Registry', icon: FileSpreadsheet },
+            { id: 'records', label: 'EHR Records (Excel Database)', icon: FileSpreadsheet, highlight: true },
+            { id: 'rec-sync', label: 'Cloud & Database Sync', icon: RefreshCw },
             { id: 'doctors', label: 'Specialist Directory', icon: Stethoscope }
+          ]
+        },
+        {
+          title: 'ACCOUNT & IDENTITY',
+          items: [
+            { id: 'profile', label: 'Front Desk Profile & Photo', icon: User }
           ]
         }
       ];
@@ -119,16 +126,22 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           items: [
             { id: 'adm-accounts', label: 'User Account Governance', icon: UserCog },
             { id: 'adm-reports', label: 'Clinical & Legal Reports (MHA)', icon: BarChart3 },
-            { id: 'adm-sync', label: 'Cross-Clinic Data Sync', icon: RefreshCw },
+            { id: 'adm-sync', label: 'Cloud & Database Sync', icon: RefreshCw },
             { id: 'adm-audit', label: 'Security & Audit Trail', icon: ShieldAlert, highlight: true },
             { id: 'adm-broadcasts', label: 'Broadcast Announcements', icon: BellRing }
           ]
         },
         {
-          title: 'CENTRAL REGISTRIES',
+          title: 'HOSPITAL EHR & DATABASE',
           items: [
-            { id: 'records', label: 'Central EHR Records', icon: FileSpreadsheet },
+            { id: 'records', label: 'EHR Records (Excel Database)', icon: FileSpreadsheet, highlight: true },
             { id: 'doctors', label: 'Specialist Directory', icon: Stethoscope }
+          ]
+        },
+        {
+          title: 'ACCOUNT & IDENTITY',
+          items: [
+            { id: 'profile', label: 'Admin Profile & Photo', icon: User }
           ]
         }
       ];
@@ -161,10 +174,9 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         ]
       },
       {
-        title: 'MEDICAL RECORDS',
+        title: 'CARE & PRESCRIPTIONS',
         items: [
-          { id: 'records', label: 'Patient Records (EHR)', icon: FileSpreadsheet },
-          { id: 'prescriptions-lab', label: 'Prescriptions & Lab Records', icon: FileText }
+          { id: 'prescriptions-lab', label: 'Prescriptions & Lab Reports', icon: FileText }
         ]
       },
       {
@@ -193,7 +205,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       case 'receptionist':
         return { tag: 'FRONT DESK', color: 'bg-sky-500/20 text-sky-300 border-sky-500/30' };
       default:
-        return { tag: 'PATIENT PORTAL', color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' };
+        return { tag: 'PATIENT PORTAL', color: 'bg-amber-100 text-amber-900 border-amber-300 font-bold' };
     }
   };
 
@@ -210,30 +222,17 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       )}
 
       <aside className={`
-        fixed top-0 bottom-0 left-0 z-40 w-72 bg-slate-950 text-slate-300 flex flex-col border-r border-slate-800/80 transition-all duration-300 ease-in-out
+        fixed top-0 bottom-0 left-0 z-40 w-72 bg-white text-slate-800 flex flex-col border-r border-slate-200/90 shadow-sm transition-all duration-300 ease-in-out
         ${isMobileOpen ? 'translate-x-0' : isSidebarCollapsed ? '-translate-x-full' : 'translate-x-0'}
       `}>
         {/* Brand Header with Close Sidebar Button */}
-        <div className="h-20 px-5 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/80">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-indigo-900/40">
-              <HeartPulse className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base tracking-tight text-white">MHC-PMS</span>
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${roleHeaderMeta.color}`}>
-                  {roleHeaderMeta.tag}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium">Mental Health Care</p>
-            </div>
-          </div>
+        <div className="h-20 px-5 flex items-center justify-between border-b border-slate-100 bg-white">
+          <AarogyamLogo size="sm" subtitle={roleHeaderMeta.tag} />
 
           {/* Close Sidebar Button (Desktop & Mobile) */}
           <button
             onClick={handleCloseSidebar}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
             title="Close sidebar navigation"
             aria-label="Close sidebar"
           >
@@ -243,23 +242,28 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         </div>
 
         {/* User Mini Card */}
-        <div className="mx-4 my-3.5 p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center gap-3 shadow-xs">
+        <div 
+          onClick={() => handleNav('profile')}
+          className="mx-4 my-3.5 p-3 rounded-2xl bg-amber-50/60 hover:bg-amber-100/70 border border-amber-200/80 flex items-center gap-3 shadow-2xs cursor-pointer group transition"
+          title="Click to view and edit your profile & photo"
+        >
           <img 
             src={currentUser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'} 
             alt={currentUser?.fullName || currentUser?.name || 'User'} 
-            className="w-11 h-11 rounded-full object-cover border-2 border-indigo-500/80 shadow-md shrink-0"
+            className="w-11 h-11 rounded-full object-cover border-2 border-amber-400 shadow-xs shrink-0 group-hover:scale-105 transition"
           />
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold text-white truncate">{currentUser?.fullName || currentUser?.name}</h4>
+            <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-amber-950 transition">{currentUser?.fullName || currentUser?.name}</h4>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950/80 px-1.5 py-0.5 rounded border border-indigo-800/60 shrink-0">
+              <span className="text-[10px] text-slate-600 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
                 {currentUser?.id}
               </span>
-              <span className="text-[10px] text-indigo-400 font-semibold truncate capitalize">
-                {currentRole} Role
+              <span className="text-[10px] text-amber-700 font-bold truncate capitalize">
+                {currentRole} Portal
               </span>
             </div>
           </div>
+          <Edit3 className="w-3.5 h-3.5 text-amber-700 opacity-60 group-hover:opacity-100 transition shrink-0" />
         </div>
 
         {/* Navigation List */}
@@ -267,7 +271,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           {navSections.map((section, idx) => (
             <div key={idx}>
               {section.title && (
-                <p className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase mb-1.5">
+                <p className="px-3 text-[10px] font-bold tracking-wider text-slate-400 uppercase mb-1.5">
                   {section.title}
                 </p>
               )}
@@ -282,16 +286,16 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                       className={`
                         w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group cursor-pointer
                         ${isActive 
-                          ? 'bg-linear-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-950/50 font-semibold' 
+                          ? 'bg-amber-400 text-slate-950 shadow-sm shadow-amber-400/20 font-bold' 
                           : item.highlight
-                          ? 'text-indigo-200 hover:bg-slate-900 hover:text-white bg-indigo-950/40 border border-indigo-900/50'
-                          : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                          ? 'text-amber-900 hover:bg-amber-50 bg-amber-50/50 border border-amber-200/60 font-semibold'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 font-medium'
                         }
                       `}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <Icon className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                          isActive ? 'text-white' : item.highlight ? 'text-indigo-400' : 'text-slate-400'
+                          isActive ? 'text-slate-950' : item.highlight ? 'text-amber-600' : 'text-slate-400'
                         }`} />
                         <span className="truncate">{item.label}</span>
                       </div>
@@ -299,13 +303,13 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                       <div className="flex items-center gap-1.5">
                         {item.badge && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                            isActive ? 'bg-white text-indigo-900' : 'bg-indigo-600 text-white'
+                            isActive ? 'bg-slate-950 text-amber-300' : 'bg-amber-100 text-amber-900 border border-amber-300'
                           }`}>
                             {item.badge}
                           </span>
                         )}
-                        <ChevronRight className={`w-3 h-3 text-slate-500 group-hover:text-slate-300 transition-transform ${
-                          isActive ? 'text-white translate-x-0.5' : 'opacity-0 group-hover:opacity-100'
+                        <ChevronRight className={`w-3 h-3 text-slate-400 group-hover:text-slate-600 transition-transform ${
+                          isActive ? 'text-slate-950 translate-x-0.5' : 'opacity-0 group-hover:opacity-100'
                         }`} />
                       </div>
                     </button>
@@ -316,89 +320,17 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           ))}
         </nav>
 
-        {/* Footer: Switch Role Modal Trigger & Logout */}
-        <div className="p-4 border-t border-slate-800/80 bg-slate-950/60 space-y-2">
-          <button
-            onClick={() => setIsSwitchModalOpen(true)}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white hover:bg-indigo-950/50 border border-indigo-900/40 transition cursor-pointer"
-          >
-            <div className="flex items-center gap-2.5">
-              <ArrowRightLeft className="w-4 h-4 text-indigo-400" />
-              <span>Switch Role (Sign In)</span>
-            </div>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
-          </button>
-
+        {/* Footer: Secure Logout */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/70">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-950/30 transition cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition cursor-pointer shadow-2xs"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
           </button>
         </div>
       </aside>
-
-      {/* Switch Role Modal */}
-      {isSwitchModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 text-white shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <ArrowRightLeft className="w-5 h-5 text-indigo-400" />
-                <h3 className="text-base font-bold">Switch User Profile</h3>
-              </div>
-              <button 
-                onClick={() => setIsSwitchModalOpen(false)}
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
-              Switching roles will <strong>sign you out</strong> of the active <strong>{currentRole.toUpperCase()}</strong> session. You must authenticate with the target role credentials.
-            </p>
-
-            <div className="mt-4 space-y-2">
-              {[
-                { role: 'doctor', title: 'Doctor (Dr. Shashank Pandey)', icon: Stethoscope, desc: 'Consultation queue, e-Rx, psychometric scales' },
-                { role: 'receptionist', title: 'Receptionist (Medha Banerjee)', icon: Building, desc: 'Appointments, visitors, payments, counselling' },
-                { role: 'admin', title: 'System Admin (Shounak Sarkar)', icon: ShieldCheck, desc: 'Account governance, legal reports, cross-clinic sync' },
-                { role: 'patient', title: 'Patient (Aaryan Kumar)', icon: User, desc: 'Personal EHR, doctor availability, appointment booking' }
-              ].map(r => {
-                const Icon = r.icon;
-                const isCurrent = currentRole === r.role;
-                return (
-                  <button
-                    key={r.role}
-                    disabled={isCurrent}
-                    onClick={() => handleSwitchRole(r.role)}
-                    className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between cursor-pointer ${
-                      isCurrent 
-                        ? 'bg-slate-800/40 border-slate-800 text-slate-500 cursor-not-allowed'
-                        : 'bg-slate-800/80 hover:bg-indigo-950/60 border-slate-700/80 hover:border-indigo-500/50 text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4 text-indigo-400" />
-                      <div>
-                        <p className="text-xs font-bold">{r.title}</p>
-                        <p className="text-[10px] text-slate-400">{r.desc}</p>
-                      </div>
-                    </div>
-                    {isCurrent ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-700 text-slate-400">Current</span>
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

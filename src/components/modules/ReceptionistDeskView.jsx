@@ -25,7 +25,12 @@ import {
   ArrowRightLeft,
   Sparkles,
   RefreshCw,
-  BadgeAlert
+  BadgeAlert,
+  Edit3,
+  Upload,
+  Camera,
+  Cloud,
+  Database
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -47,11 +52,61 @@ export const ReceptionistDeskView = () => {
     counsellingSessions,
     allotCounsellingSession,
     cancelCounsellingSession,
+    updateReceptionistProfile,
     switchRoleWithLogout,
     activeTab,
     setActiveTab,
-    showToast 
+    showToast,
+    exportMasterDatabaseToExcel,
+    syncAllCollectionsToFirebase,
+    firebaseSyncStatus
   } = useApp();
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncDatabase = async () => {
+    setIsSyncing(true);
+    try {
+      await syncAllCollectionsToFirebase();
+    } finally {
+      setTimeout(() => setIsSyncing(false), 700);
+    }
+  };
+
+  // 0. Edit Profile State
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    fullName: currentUser?.fullName || 'Medha Banerjee',
+    title: currentUser?.title || 'Lead Front Desk & Patient Intake Coordinator',
+    department: currentUser?.department || 'Central Outpatient Reception & Admissions',
+    deskLocation: currentUser?.deskLocation || 'Main Lobby Central Reception, Desk #2',
+    shift: currentUser?.shift || 'Morning Shift (08:00 AM - 04:00 PM)',
+    phone: currentUser?.phone || '+91 98450 11223',
+    email: currentUser?.email || 'medha.banerjee@mhc-pms.org',
+    avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300'
+  });
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Image file size should be less than 2MB', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileForm(prev => ({ ...prev, avatar: reader.result }));
+        showToast('Photo uploaded from local device!');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    updateReceptionistProfile(profileForm);
+    setIsEditProfileOpen(false);
+  };
 
   // Synchronize internal subtab with sidebar activeTab
   const currentSubTab = activeTab && activeTab.startsWith('rec-') 
@@ -303,31 +358,31 @@ export const ReceptionistDeskView = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* 1. Receptionist Identity & Shift Session Banner */}
-      <div className="bg-linear-to-r from-slate-900 via-sky-950 to-slate-900 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-sky-900/40 relative overflow-hidden">
+      <div className="bg-linear-to-r from-amber-50/90 via-white to-amber-100/50 text-slate-900 rounded-3xl p-6 sm:p-7 shadow-xs border border-amber-200/90 relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
           <div className="flex items-center gap-4 sm:gap-5">
             <img 
               src={currentUser?.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300'} 
               alt={currentUser?.fullName || 'Receptionist'} 
-              className="w-18 h-18 rounded-2xl object-cover ring-4 ring-sky-500/30 shadow-md shrink-0"
+              className="w-18 h-18 rounded-2xl object-cover ring-4 ring-amber-300 shadow-sm shrink-0"
             />
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/20 text-sky-300 border border-sky-400/30">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
                   {currentUser?.role || 'Receptionist'} • {currentUser?.id || 'REC-104'}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Front Desk Intake Active
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
                 {currentUser?.fullName || 'Medha Banerjee'}
               </h2>
-              <p className="text-xs sm:text-sm text-sky-200/90 font-medium">
+              <p className="text-xs sm:text-sm text-slate-600 font-medium">
                 {currentUser?.title || 'Lead Front Desk & Patient Intake Coordinator'}
               </p>
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-[11px] text-slate-500 mt-1">
                 {currentUser?.deskLocation || 'Main Lobby Central Reception, Desk #2'} • {currentUser?.shift || 'Morning Shift (08:00 AM - 04:00 PM)'}
               </p>
             </div>
@@ -335,51 +390,75 @@ export const ReceptionistDeskView = () => {
 
           <div className="flex flex-wrap items-center gap-2">
             <button
+              onClick={() => setActiveTab('records')}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 transition flex items-center gap-1.5 shadow-md cursor-pointer font-black"
+              title="Open full interactive multi-sheet EHR spreadsheet on website"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-slate-950" />
+              <span>Tabular EHR (Excel)</span>
+            </button>
+            <button
+              onClick={handleSyncDatabase}
+              disabled={isSyncing}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+              title="Synchronize all front desk collections to Google Cloud Firebase"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Database'}</span>
+            </button>
+            <button
+              onClick={exportMasterDatabaseToExcel}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              title="Download entire MHC-PMS database as a multi-sheet Excel spreadsheet (.xls)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Export Master Excel</span>
+            </button>
+            <button
+              onClick={() => setIsEditProfileOpen(true)}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Edit Details & Photo</span>
+            </button>
+            <button
               onClick={() => setIsWalkInModalOpen(true)}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-sky-600 hover:bg-sky-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Book Appointment</span>
             </button>
             <button
               onClick={() => setIsAddPatientModalOpen(true)}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
+              className="px-4 py-2 text-xs font-bold rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 transition flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               <span>Add Patient Record</span>
-            </button>
-            <button
-              onClick={() => switchRoleWithLogout('doctor')}
-              className="px-3 py-2 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 border border-white/20 transition flex items-center gap-1.5 cursor-pointer"
-              title="Log out and switch role"
-            >
-              <ArrowRightLeft className="w-3.5 h-3.5 text-sky-300" />
-              <span>Switch Role</span>
             </button>
           </div>
         </div>
 
         {/* Quick Reception Metrics */}
-        <div className="mt-5 pt-5 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Scheduled Appointments</p>
-            <p className="text-lg font-black text-white mt-0.5">{appointments.length}</p>
+        <div className="mt-5 pt-5 border-t border-amber-200/60 grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+          <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Scheduled Appointments</p>
+            <p className="text-lg font-black text-slate-900 mt-0.5">{appointments.length}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Registered Patients</p>
-            <p className="text-lg font-black text-indigo-300 mt-0.5">{patientRecordsList?.length || 0}</p>
+          <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Registered Patients</p>
+            <p className="text-lg font-black text-amber-700 mt-0.5">{patientRecordsList?.length || 0}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Visitors In Lounge</p>
-            <p className="text-lg font-black text-sky-300 mt-0.5">{waitingVisitors.filter(v => v.status === 'In Waiting Lounge').length}</p>
+          <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Visitors In Lounge</p>
+            <p className="text-lg font-black text-sky-700 mt-0.5">{waitingVisitors.filter(v => v.status === 'In Waiting Lounge').length}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Invoices Issued</p>
-            <p className="text-lg font-black text-emerald-300 mt-0.5">{billingInvoices.length}</p>
+          <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs">
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Invoices Issued</p>
+            <p className="text-lg font-black text-emerald-700 mt-0.5">{billingInvoices.length}</p>
           </div>
-          <div className="bg-white/5 rounded-2xl p-2.5 border border-white/5 col-span-2 sm:col-span-1">
-            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Counselling Sessions</p>
-            <p className="text-lg font-black text-purple-300 mt-0.5">{counsellingSessions?.length || 0}</p>
+          <div className="bg-white rounded-2xl p-2.5 border border-slate-200/80 shadow-xs col-span-2 sm:col-span-1">
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Counselling Sessions</p>
+            <p className="text-lg font-black text-purple-700 mt-0.5">{counsellingSessions?.length || 0}</p>
           </div>
         </div>
       </div>
@@ -539,33 +618,70 @@ export const ReceptionistDeskView = () => {
       {/* SUBTAB 2: CREATE AND ADD PATIENT RECORDS */}
       {/* ========================================================================= */}
       {currentSubTab === 'patients' && (
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">Patient Electronic Health Registry (EHR)</h3>
-              <p className="text-xs text-slate-500">Register new incoming patients, create demographic records, and manage intake histories</p>
+        <div className="space-y-4">
+          {/* Top Master Tabular EHR Access Banner */}
+          <div className="bg-amber-50/80 border border-amber-300 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+                <FileSpreadsheet className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-black text-slate-950">Central Electronic Health Records (EHR) — Tabular Excel Engine</h4>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    Live Web Spreadsheets
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  View full multi-sheet hospital database tables (Patients, Appointments, Prescriptions, Labs, Billing, Visitors, System Logs) with live search and cloud sync.
+                </p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search patient name, ID, or phone..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-600 focus:outline-hidden w-48 sm:w-64"
-                />
-              </div>
-              <button
-                onClick={() => setIsAddPatientModalOpen(true)}
-                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>Add Patient Record</span>
-              </button>
-            </div>
+            <button
+              onClick={() => setActiveTab('records')}
+              className="px-5 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 text-amber-300 font-black text-xs transition cursor-pointer flex items-center gap-2 self-start sm:self-auto shrink-0 shadow-sm border border-amber-400/40"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
+              <span>Open Tabular EHR Database</span>
+            </button>
           </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Patient Electronic Health Registry (EHR)</h3>
+                <p className="text-xs text-slate-500">Register new incoming patients, create demographic records, and manage intake histories</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search patient name, ID, or phone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-sky-600 focus:outline-hidden w-48 sm:w-64"
+                  />
+                </div>
+                <button
+                  onClick={() => setActiveTab('records')}
+                  className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400/40"
+                  title="Open live multi-sheet spreadsheet"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Tabular EHR</span>
+                </button>
+                <button
+                  onClick={() => setIsAddPatientModalOpen(true)}
+                  className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs font-black"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Add Patient Record</span>
+                </button>
+              </div>
+            </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -583,7 +699,7 @@ export const ReceptionistDeskView = () => {
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
                 {filteredPatients.map(patient => (
                   <tr key={patient.id} className="hover:bg-slate-50/60">
-                    <td className="py-3 px-4 font-bold text-indigo-700 font-mono">{patient.id}</td>
+                    <td className="py-3 px-4 font-bold text-amber-800 font-mono">{patient.id}</td>
                     <td className="py-3 px-4">
                       <p className="font-bold text-slate-900">{patient.fullName}</p>
                       <p className="text-[11px] text-slate-500">{patient.phone} • {patient.email}</p>
@@ -597,7 +713,7 @@ export const ReceptionistDeskView = () => {
                     <td className="py-3 px-4 font-semibold text-slate-800">{patient.assignedDoctor}</td>
                     <td className="py-3 px-4">
                       <p className="font-medium text-slate-900">{patient.primaryDiagnosis}</p>
-                      <span className="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.2 rounded font-semibold">
+                      <span className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.2 rounded font-semibold border border-amber-200">
                         {patient.severity}
                       </span>
                     </td>
@@ -622,6 +738,7 @@ export const ReceptionistDeskView = () => {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       )}
 
@@ -672,7 +789,7 @@ export const ReceptionistDeskView = () => {
                     </td>
                     <td className="py-3 px-4">
                       <p className="font-bold text-slate-900">{visitor.patientName}</p>
-                      <p className="text-[11px] text-indigo-600 font-mono">{visitor.patientId}</p>
+                      <p className="text-[11px] text-amber-800 font-mono font-semibold">{visitor.patientId}</p>
                     </td>
                     <td className="py-3 px-4">
                       <p className="text-slate-700 font-medium">{visitor.purposeOfVisit || 'Consultation Companion'}</p>
@@ -1071,7 +1188,7 @@ export const ReceptionistDeskView = () => {
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-indigo-600" />
+                <UserPlus className="w-5 h-5 text-amber-500" />
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Create & Add Electronic Patient Record</h3>
                   <p className="text-[11px] text-slate-500">MHC-PMS Central Clinical Health Record Intake</p>
@@ -1095,7 +1212,7 @@ export const ReceptionistDeskView = () => {
                     placeholder="e.g. Vikramaditya Sen"
                     value={patientForm.fullName}
                     onChange={(e) => setPatientForm({ ...patientForm, fullName: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                   />
                 </div>
                 <div>
@@ -1106,7 +1223,7 @@ export const ReceptionistDeskView = () => {
                     placeholder="+91 98112 34567"
                     value={patientForm.phone}
                     onChange={(e) => setPatientForm({ ...patientForm, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -1119,7 +1236,7 @@ export const ReceptionistDeskView = () => {
                     placeholder="25"
                     value={patientForm.age}
                     onChange={(e) => setPatientForm({ ...patientForm, age: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                   />
                 </div>
                 <div>
@@ -1127,7 +1244,7 @@ export const ReceptionistDeskView = () => {
                   <select
                     value={patientForm.gender}
                     onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden bg-white"
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -1139,7 +1256,7 @@ export const ReceptionistDeskView = () => {
                   <select
                     value={patientForm.bloodGroup}
                     onChange={(e) => setPatientForm({ ...patientForm, bloodGroup: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden bg-white"
                   >
                     <option value="A+">A+</option>
                     <option value="B+">B+</option>
@@ -1158,7 +1275,7 @@ export const ReceptionistDeskView = () => {
                   <select
                     value={patientForm.assignedDoctor}
                     onChange={(e) => setPatientForm({ ...patientForm, assignedDoctor: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden bg-white"
                   >
                     {doctors.map(d => (
                       <option key={d.id} value={d.name}>{d.name} ({d.speciality})</option>
@@ -1170,7 +1287,7 @@ export const ReceptionistDeskView = () => {
                   <select
                     value={patientForm.clinicNode}
                     onChange={(e) => setPatientForm({ ...patientForm, clinicNode: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden bg-white"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden bg-white"
                   >
                     <option value="Central Hospital OPD">Central Hospital OPD</option>
                     <option value="North Specialty Satellite">North Specialty Satellite</option>
@@ -1187,7 +1304,7 @@ export const ReceptionistDeskView = () => {
                   placeholder="e.g. Persistent panic attacks and depressive dysphoria"
                   value={patientForm.primaryDiagnosis}
                   onChange={(e) => setPatientForm({ ...patientForm, primaryDiagnosis: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                 />
               </div>
 
@@ -1199,7 +1316,7 @@ export const ReceptionistDeskView = () => {
                     placeholder="e.g. Meera Sen (Spouse) - 98112 00000"
                     value={patientForm.emergencyContact}
                     onChange={(e) => setPatientForm({ ...patientForm, emergencyContact: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                   />
                 </div>
                 <div>
@@ -1209,7 +1326,7 @@ export const ReceptionistDeskView = () => {
                     placeholder="e.g. Star Health / Self Pay"
                     value={patientForm.insuranceProvider}
                     onChange={(e) => setPatientForm({ ...patientForm, insuranceProvider: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-hidden"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -1218,13 +1335,13 @@ export const ReceptionistDeskView = () => {
                 <button
                   type="button"
                   onClick={() => setIsAddPatientModalOpen(false)}
-                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-3.5 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs"
+                  className="px-4 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-xl shadow-xs"
                 >
                   Save & Register Patient
                 </button>
@@ -1650,6 +1767,143 @@ export const ReceptionistDeskView = () => {
                   className="px-4 py-1.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs"
                 >
                   Confirm & Allot Session
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* EDIT RECEPTIONIST PROFILE & PHOTO MODAL */}
+      {isEditProfileOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-sky-50 text-sky-600">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Edit Front Desk Profile & Photo</h3>
+                  <p className="text-xs text-slate-500">Receptionist ID: REC-104 • Medha Banerjee</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsEditProfileOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-3.5 text-xs">
+              <div className="p-3.5 rounded-2xl bg-sky-50/60 border border-sky-200">
+                <label className="block font-bold text-slate-800 mb-2">Profile Photo</label>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={profileForm.avatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300'}
+                    alt="Preview"
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-sky-500 shrink-0"
+                  />
+                  <div className="flex-1 space-y-2">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                      <Upload className="w-3.5 h-3.5 text-sky-600" />
+                      <span>Upload Local Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="Or paste direct image URL"
+                      value={profileForm.avatar}
+                      onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
+                      className="w-full px-3 py-1.5 border border-slate-300 rounded-xl bg-white outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.fullName}
+                    onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.title}
+                    onChange={(e) => setProfileForm({ ...profileForm, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Official Email</label>
+                  <input
+                    type="email"
+                    value={profileForm.email}
+                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Desk Location</label>
+                  <input
+                    type="text"
+                    value={profileForm.deskLocation}
+                    onChange={(e) => setProfileForm({ ...profileForm, deskLocation: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Shift Timings</label>
+                  <input
+                    type="text"
+                    value={profileForm.shift}
+                    onChange={(e) => setProfileForm({ ...profileForm, shift: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-sky-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="px-4 py-2 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl font-bold text-white bg-sky-600 hover:bg-sky-700 transition cursor-pointer shadow-sm"
+                >
+                  Save Profile
                 </button>
               </div>
             </form>

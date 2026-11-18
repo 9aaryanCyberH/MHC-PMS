@@ -63,7 +63,7 @@ export const DoctorsView = () => {
               placeholder="Search by doctor name, speciality, condition (e.g. Anxiety, ADHD)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="w-full pl-10 pr-4 py-2.5 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ export const DoctorsView = () => {
               onClick={() => setSelectedSpeciality(spec)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
                 selectedSpeciality === spec
-                  ? 'bg-indigo-600 text-white shadow-xs'
+                  ? 'bg-amber-400 text-slate-950 font-bold shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
               }`}
             >
@@ -97,7 +97,7 @@ export const DoctorsView = () => {
               setSearchQuery('');
               setSelectedSpeciality('All Specialities');
             }}
-            className="mt-3 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition cursor-pointer"
+            className="mt-3 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold rounded-xl transition cursor-pointer"
           >
             Reset Filters
           </button>
@@ -107,7 +107,7 @@ export const DoctorsView = () => {
           {filteredDoctors.map((doctor) => (
             <div
               key={doctor.id}
-              className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs hover:border-indigo-400 hover:shadow-md transition flex flex-col justify-between group"
+              className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs hover:border-amber-400 hover:shadow-md transition flex flex-col justify-between group"
             >
               <div>
                 {/* Doctor Head */}
@@ -115,13 +115,13 @@ export const DoctorsView = () => {
                   <img
                     src={doctor.avatar}
                     alt={doctor.name}
-                    className="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500/80 shadow-sm flex-shrink-0"
+                    className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 shadow-sm flex-shrink-0"
                   />
                   <div className="min-w-0">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200/70 inline-block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-300 inline-block mb-1">
                       {doctor.speciality}
                     </span>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-700 transition truncate">
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-amber-600 transition truncate">
                       {doctor.name}
                     </h3>
                     <p className="text-[11px] text-slate-500 truncate">{doctor.qualification}</p>
@@ -138,7 +138,7 @@ export const DoctorsView = () => {
                   <span className="text-[11px] text-slate-600 font-medium">
                     <strong>{doctor.experience}</strong> Exp
                   </span>
-                  <span className="text-[11px] font-bold text-indigo-900 bg-indigo-50/80 px-2 py-0.5 rounded">
+                  <span className="text-[11px] font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                     ₹{doctor.consultationFee}
                   </span>
                 </div>
@@ -175,7 +175,7 @@ export const DoctorsView = () => {
                 </button>
                 <button
                   onClick={() => navigateToCheckAvailability(doctor.id)}
-                  className="py-2 px-3 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition flex items-center justify-center gap-1 cursor-pointer"
+                  className="py-2 px-3 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 shadow-xs transition flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <CalendarClock className="w-3.5 h-3.5" />
                   <span>Check Availability</span>

@@ -8,7 +8,6 @@ import {
   AlertCircle, 
   FileText, 
   MapPin, 
-  Video, 
   Building2, 
   ArrowRight, 
   Printer, 
@@ -68,8 +67,8 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
       date: date,
       displayDate: formattedDate,
       time: time,
-      type: type,
-      location: type.includes('Online') ? 'Telehealth Portal Room #4' : currentDoctor.roomNumber,
+      type: 'In-Person Clinic Consultation',
+      location: currentDoctor.roomNumber,
       reason: reason,
       fee: currentDoctor.consultationFee
     });
@@ -136,7 +135,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                   <select
                     value={doctorId}
                     onChange={(e) => setDoctorId(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none"
                   >
                     {doctors.map(d => (
                       <option key={d.id} value={d.id}>{d.name} ({d.speciality})</option>
@@ -152,7 +151,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                       value={date}
                       min="2026-09-13"
                       onChange={(e) => setDate(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none"
                     />
                   </div>
                   <div>
@@ -162,38 +161,21 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                       value={time}
                       onChange={(e) => setTime(e.target.value)}
                       placeholder="e.g. 10:00 AM"
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Consultation Mode</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setType('In-Person Clinic Consultation')}
-                      className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 transition cursor-pointer ${
-                        type === 'In-Person Clinic Consultation'
-                          ? 'bg-indigo-50 border-indigo-600 text-indigo-900 ring-1 ring-indigo-500'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Building2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                      <span>In-Person Clinic</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setType('Online Tele-Therapy Session')}
-                      className={`p-3 rounded-xl border text-xs font-semibold flex items-center gap-2 transition cursor-pointer ${
-                        type === 'Online Tele-Therapy Session'
-                          ? 'bg-indigo-50 border-indigo-600 text-indigo-900 ring-1 ring-indigo-500'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      <Video className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                      <span>Online Tele-Therapy</span>
-                    </button>
+                  <div className="p-3 rounded-xl border bg-amber-50/80 border-amber-400 text-amber-950 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-bold">
+                      <Building2 className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span>In-Person Outpatient Clinic Visit</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">
+                      Hospital OPD Suite
+                    </span>
                   </div>
                 </div>
 
@@ -203,7 +185,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                     rows={2}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none"
                     placeholder="Brief description of symptoms or consultation goal..."
                   />
                 </div>
@@ -218,7 +200,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow transition cursor-pointer"
+                    className="px-5 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl shadow-md shadow-amber-400/20 transition cursor-pointer"
                   >
                     Review Summary
                   </button>
@@ -229,43 +211,43 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
             {/* ----------------- STEP 2: SUMMARY ----------------- */}
             {step === 'summary' && (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200/80">
-                  <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wider mb-3">
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80">
+                  <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wider mb-3">
                     Appointment Booking Summary
                   </h4>
 
                   <div className="space-y-2.5 text-xs text-slate-800">
-                    <div className="flex justify-between py-1 border-b border-indigo-100">
+                    <div className="flex justify-between py-1 border-b border-amber-200/60">
                       <span className="text-slate-500 font-medium">Doctor:</span>
                       <span className="font-bold text-slate-900">{currentDoctor.name}</span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-indigo-100">
+                    <div className="flex justify-between py-1 border-b border-amber-200/60">
                       <span className="text-slate-500 font-medium">Speciality:</span>
-                      <span className="font-semibold text-indigo-800">{currentDoctor.speciality}</span>
+                      <span className="font-semibold text-amber-900">{currentDoctor.speciality}</span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-indigo-100">
+                    <div className="flex justify-between py-1 border-b border-amber-200/60">
                       <span className="text-slate-500 font-medium">Date:</span>
                       <span className="font-bold text-slate-900">
                         {new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-indigo-100">
+                    <div className="flex justify-between py-1 border-b border-amber-200/60">
                       <span className="text-slate-500 font-medium">Time:</span>
-                      <span className="font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded">
+                      <span className="font-bold text-amber-900 bg-amber-100/90 px-2 py-0.5 rounded">
                         {time}
                       </span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-indigo-100">
+                    <div className="flex justify-between py-1 border-b border-amber-200/60">
                       <span className="text-slate-500 font-medium">Mode:</span>
                       <span className="font-semibold text-slate-900">{type}</span>
                     </div>
-                    <div className="flex justify-between py-1 border-b border-indigo-100">
+                    <div className="flex justify-between py-1 border-b border-amber-200/60">
                       <span className="text-slate-500 font-medium">Room / Location:</span>
                       <span className="font-semibold text-slate-900">{currentDoctor.roomNumber}</span>
                     </div>
                     <div className="flex justify-between py-1 pt-2">
                       <span className="text-slate-500 font-medium">Consultation Fee:</span>
-                      <span className="font-extrabold text-indigo-950 text-sm">₹{currentDoctor.consultationFee}</span>
+                      <span className="font-extrabold text-amber-950 text-sm">₹{currentDoctor.consultationFee}</span>
                     </div>
                   </div>
                 </div>
@@ -286,7 +268,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                   <button
                     type="button"
                     onClick={handleConfirmAppointment}
-                    className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md hover:shadow-indigo-700/20 transition cursor-pointer"
+                    className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl shadow-md shadow-amber-400/20 transition cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Confirm Appointment</span>
@@ -310,7 +292,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                     ✓ Appointment Confirmed
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    Your appointment has been recorded in MHC-PMS and synced with the clinical calendar.
+                    Your appointment has been recorded in Aarogyam and synced with the clinical calendar.
                   </p>
                 </div>
 
@@ -318,7 +300,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-left text-xs space-y-2">
                   <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
                     <span className="text-slate-500">Appointment ID:</span>
-                    <span className="font-mono font-bold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                    <span className="font-mono font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                       {confirmedData.id}
                     </span>
                   </div>
@@ -332,7 +314,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                   </div>
                   <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
                     <span className="text-slate-500">Time:</span>
-                    <span className="font-semibold text-indigo-700">{confirmedData.time}</span>
+                    <span className="font-semibold text-amber-700">{confirmedData.time}</span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
                     <span className="text-slate-500">Status:</span>
@@ -348,7 +330,7 @@ export const BookAppointmentModal = ({ isOpen, onClose, initialData }) => {
                   <button
                     type="button"
                     onClick={handleViewAppointment}
-                    className="w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition cursor-pointer"
+                    className="w-full py-2.5 px-4 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-xl shadow-md shadow-amber-400/20 transition cursor-pointer"
                   >
                     View in My Appointments
                   </button>

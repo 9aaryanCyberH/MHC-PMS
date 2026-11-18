@@ -1,70 +1,123 @@
-# MHC-PMS (Mental Health Care - Patient Management System)
+# Aarogyam — Mental Health Care & Patient Management System (MHC-PMS)
 
-A comprehensive, multi-role healthcare management platform designed for psychiatric clinics, community mental health centres, and hospital outpatient departments.
-
----
-
-## 🌟 Core Stakeholder Roles & Features
-
-### 1. Patient Portal
-- **Health Overview Dashboard**: Real-time consultation spotlight, active psychiatric diagnoses, baseline vitals, and care team summary.
-- **Check Doctor Availability**: Multi-criteria search by medical discipline, consulting psychiatrist, date, and time window.
-- **Direct Appointment Scheduling**: Book in-person clinic visits or online tele-therapy sessions with instant confirmation receipts.
-- **Electronic Health Records (EHR)**: Confidential access to psychiatric history, clinical encounter timelines, baseline vitals, and drug allergy warnings.
-- **Prescriptions & Diagnostic Lab Reports**: Active medication regimens with dosage schedules, printable Electronic Prescriptions (e-Rx), and validated psychometric scales (PHQ-9, GAD-7, biochemical panels).
-
-### 2. Doctor Workspace
-- **Consultation Queue**: Real-time patient queue with visit reasons, consultation modalities, and session tracking.
-- **Assigned Patient Records**: Full psychiatric clinical histories, previous consultation encounters, and vital telemetry.
-- **Write / Update Prescriptions**: Issue new electronic prescriptions (e-Rx) with automated dosage, frequency, and course duration.
-- **Speciality & OPD Profile**: Manage academic credentials, consultation fee, clinic hours, and clinical bio.
-- **Diagnostic Lab Review**: Review and interpret psychological test scores and physiological lab panels.
-
-### 3. Reception Desk
-- **Master Clinic Schedule**: Clinic-wide calendar tracking all consulting physicians, consultation suites, and appointment statuses.
-- **Walk-in & Telephone Booking**: Front-desk scheduling on behalf of walk-in patients or telephone calls.
-- **Billing & Invoicing**: Record consultation fee payments across payment modes (UPI, Card, Cash, Insurance) and generate receipts.
-- **Waiting Room Management**: Register patient arrivals, log accompanying visitors, issue tokens, and update queue statuses.
-
-### 4. System Administrator Console
-- **User Account Governance**: Manage user lifecycles with one-click account activation and deactivation for doctors, patients, and clinic staff.
-- **Clinical Throughput & Management Reports**: Executive visual analytics tracking patient volumes, admissions/discharges, medication expenditures, and statutory legal care provisions.
-- **Cross-Clinic Cluster Synchronization**: Automated and manual synchronization between central hospital databases and remote community clinics.
-- **System Broadcast Bulletins**: Dispatch priority notices and emergency bulletins to targeted user groups.
+**Aarogyam** is an enterprise-grade, multi-role psychiatric healthcare information and patient management system (MHC-PMS) designed for mental health hospital networks, outpatient specialty clinics, and regional satellite centers.
 
 ---
 
-## 🚀 Getting Started
+## 🏛️ System Role Hierarchy & Authority Structure
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
+MHC-PMS implements a strict 4-tier Role-Based Access Control (RBAC) hierarchy where **Admin possesses universal authority**, followed by **Receptionist**, **Doctor**, and **Patient**:
 
-### Installation
-```bash
-# Clone the repository
-git clone https://github.com/<your-username>/MHC-PMS.git
-
-# Navigate to project directory
-cd MHC-PMS
-
-# Install dependencies
-npm install
-
-# Start local development server
-npm run dev
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. System Administrator (Super Admin: Shounak Sarkar)      │
+│     ★ Universal Authority across all entities, credentials, │
+│       accounts, clinical sync, and audit governance         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│  2. Front Desk Receptionist (Medha Banerjee)                │
+│     ★ Master appointment scheduling, admissions, visitor    │
+│       waiting lounge, token tracking & billing invoicing    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│  3. Attending Doctor (Dr. Shashank Pandey)                  │
+│     ★ Clinical consultation queue, psychiatric EHR,         │
+│       e-prescribing, psychometric scales & clinical risk    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│  4. Outpatient Health Portal                                │
+│     ★ Patient 1: Aaryan Kumar | Patient 2: Agniva Samaddar   │
+│     ★ Personal EHR, self-booking, e-Rx & profile editing    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Build for Production
+---
+
+## 👥 Real Stakeholder Profiles (No Dummy Doctors)
+
+All roles represent real named stakeholders with individual login capabilities, editable photos, and credential management:
+
+1. **System Administrator (Universal Authority)**
+   - **Name**: Shounak Sarkar
+   - **User ID**: `ADM-001`
+   - **Email**: `shounak.sarkar@mhc-pms.org`
+   - **Default Password**: `admin123`
+   - **Authority**: Full root governance over all user accounts, credential creation/override, role assignments, cross-clinic synchronization, and statutory legal reports.
+
+2. **Receptionist (Front Desk Operations)**
+   - **Name**: Medha Banerjee
+   - **User ID**: `REC-104`
+   - **Email**: `medha.banerjee@mhc-pms.org`
+   - **Default Password**: `reception123`
+   - **Authority**: Patient registration, master appointments calendar (book/reschedule/cancel), visitor lounge check-ins, fee invoicing (UPI/Card/Cash), and counselling session allotments.
+
+3. **Attending Doctor (Clinical Director - No Dummy Doctors)**
+   - **Name**: Dr. Shashank Pandey
+   - **User ID**: `DOC-001`
+   - **Email**: `shashank.pandey@mhc-pms.org`
+   - **Title**: Chief Consultant Psychiatrist & Clinical Director
+   - **Qualifications**: MBBS, MD (Psychiatry - NIMHANS), DNB, FIPS
+   - **OPD Suite**: Suite 204, East Wing (Timings: 09:00 AM - 04:00 PM, Fee: ₹1200)
+   - **Default Password**: `doctor123`
+   - **Authority**: Clinical queue management, psychiatric EHR, signing electronic prescriptions (e-Rx), ordering diagnostic & psychometric tests (PHQ-9, GAD-7, EEG), and clinical risk alerts.
+
+4. **Patient 1 (Outpatient)**
+   - **Name**: Aaryan Kumar
+   - **User ID**: `PT-88204`
+   - **Email**: `aaryan.kumar@example.com`
+   - **Age / Blood Group**: 21 Years • A+
+   - **Primary Diagnosis**: Generalized Anxiety Disorder (GAD)
+   - **Default Password**: `patient123`
+   - **Photo & Details**: Editable by personal login.
+
+5. **Patient 2 (Outpatient)**
+   - **Name**: Agniva Samaddar
+   - **User ID**: `PT-88205`
+   - **Email**: `agniva.samaddar@example.com`
+   - **Age / Blood Group**: 22 Years • B+
+   - **Primary Diagnosis**: Adult Attention & Sleep Phase Dysregulation
+   - **Default Password**: `patient123`
+   - **Photo & Details**: Editable by personal login.
+
+---
+
+## 🧭 Application Flow & Navigation
+
+1. **Public Hospital Landing Page (`LandingView`)**
+   - High-contrast clinical typography, responsive navigation menu mirroring Apollo Hospitals (Centers of Excellence, Find Doctors, Hospital Services, Emergency 24x7, Patient Portal).
+   - Interactive breakdown of key psychiatric specialties and clinical excellence statistics.
+   - Attending doctor showcase (Dr. Shashank Pandey) with room, consultation schedule, and fee.
+   - Quick direct links to Portal Sign In and Patient Registration.
+
+2. **Authentication Portal (`LoginView`)**
+   - **Staff Login**:
+     - Sub-tab: **Doctor Login** (Dr. Shashank Pandey)
+     - Sub-tab: **Receptionist Login** (Medha Banerjee)
+   - **Admin Login**:
+     - System Administrator (Shounak Sarkar — Universal Authority)
+   - **Patient Portal**:
+     - Select **Patient 1: Aaryan Kumar** or **Patient 2: Agniva Samaddar** (or custom email/ID)
+     - Patient Self-Registration / Sign Up
+   - Password Change Modal
+   - Auto-fill helper buttons for immediate evaluation.
+
+3. **Individual Photo & Detail Editing**
+   - **Patients**: Edit full name, email, phone, DOB, blood group, address, emergency contact, insurance, and photo (local file upload via FileReader or image URL).
+   - **Doctor**: Edit clinical bio, medical degrees, consultation fee, OPD room, schedule, and photo.
+   - **Receptionist**: Edit front-desk details, shift hours, desk location, contact info, and photo.
+   - **Admin**: Edit admin profile and photo, plus Universal Authority to edit ANY user's credentials, role, status, and password.
+
+---
+
+## 🛠️ Build & Verification
+
 ```bash
+# Run local development server
+npm run dev
+
+# Run production build
 npm run build
 ```
-
----
-
-## 👥 Default Stakeholder Profiles
-
-- **Patient**: Aaryan Kumar (`PT-88204` / `patient123`) — Age 21, Blood Group A+
-- **Doctor**: Dr. Shashank Pandey (`DOC-001` / `doctor123`) — Senior Consultant Psychiatrist
-- **Receptionist**: Medha Banerjee (`REC-104` / `reception123`) — Lead Front Desk Coordinator
-- **System Admin**: Shounak Sarkar (`ADM-001` / `admin123`) — Healthcare Informatics Administrator

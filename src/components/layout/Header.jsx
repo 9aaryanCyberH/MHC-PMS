@@ -15,7 +15,11 @@ import {
   Shield,
   Stethoscope,
   Building,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Home,
+  RefreshCw,
+  Cloud,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -24,20 +28,30 @@ export const Header = ({ setIsMobileOpen }) => {
     activeTab, 
     setActiveTab, 
     currentRole,
-    switchRoleWithLogout,
     currentUser,
     logout, 
     appointments, 
     broadcastNotifications,
     isSidebarCollapsed,
     setIsSidebarCollapsed,
-    setIsBookingModalOpen
+    setIsBookingModalOpen,
+    setPublicView,
+    syncAllCollectionsToFirebase,
+    firebaseSyncStatus
   } = useApp();
   
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  const [isHeaderSyncing, setIsHeaderSyncing] = useState(false);
 
+  const handleHeaderSync = async () => {
+    setIsHeaderSyncing(true);
+    try {
+      await syncAllCollectionsToFirebase();
+    } finally {
+      setTimeout(() => setIsHeaderSyncing(false), 700);
+    }
+  };
 
   const pageTitles = {
     // Patient
@@ -45,20 +59,35 @@ export const Header = ({ setIsMobileOpen }) => {
     availability: 'Check Doctor Availability',
     'book-appointment': 'Book Appointment',
     appointments: currentRole === 'doctor' ? 'Clinical Appointments Schedule' : currentRole === 'receptionist' ? 'Master Appointments Schedule' : 'My Appointments Schedule',
-    records: currentRole === 'doctor' ? 'Psychiatric Electronic Health Records (EHR)' : currentRole === 'admin' ? 'Central Database Records (EHR)' : 'Electronic Health Records (EHR)',
+    records: 'Electronic Health Records (EHR) — Excel Spreadsheet Database',
     'prescriptions-lab': currentRole === 'doctor' ? 'e-Prescriptions & Psychometric Lab Reports' : 'Prescriptions & Diagnostic Lab Reports',
     doctors: 'Clinical Specialists Directory',
-    profile: 'Patient Profile & Settings',
-    // Doctor
-    'clinical-queue': 'Clinician Consultation Queue & EHR',
-    // Receptionist
-    'clinic-desk': 'Central Reception & Scheduling Desk',
-    // Admin
-    'system-overview': 'System Governance & Administrative Portal'
+    profile: currentRole === 'admin' ? 'Administrator Profile & Governance Settings' : currentRole === 'doctor' ? 'Doctor Profile & Clinical Credentials' : currentRole === 'receptionist' ? 'Front Desk Profile & Shift Settings' : 'Patient Profile & Account Settings',
+    // Doctor Specific
+    'doc-queue': 'Clinician Consultation Queue',
+    'doc-patients': 'Psychiatric EHR Dossiers & Patient Files',
+    'doc-prescriptions': 'e-Prescribing & Medication Regimens',
+    'doc-labs': 'Psychometric Scales & Laboratory Diagnostics',
+    'doc-alerts': 'Clinical Risk Surveillance & Monitoring Alerts',
+    'doc-speciality': 'Physician Speciality Credentials & OPD Suite',
+    'doc-sync': 'Hospital Cloud Firebase & Excel Data Sync',
+    // Receptionist Specific
+    'rec-schedule': 'Front Desk Appointment Booking & Triage',
+    'rec-patients': 'Patient Intake & Master Health Registry',
+    'rec-visitors': 'Visitor Lounge Details & Queue Tokens',
+    'rec-billing': 'Patient Payments & Billing Invoices',
+    'rec-counselling': 'Psychological Counselling & Therapy Allotments',
+    'rec-sync': 'Hospital Cloud Firebase & Excel Data Sync',
+    // Admin Specific
+    'adm-accounts': 'User Account Governance & Role Permissions',
+    'adm-reports': 'Clinical Analytics & Mental Healthcare Act Reports',
+    'adm-sync': 'Hospital Cloud Firebase & Cross-Clinic Data Sync',
+    'adm-audit': 'System Security & Regulatory Audit Trail',
+    'adm-broadcasts': 'Hospital Broadcast Bulletins & System Alerts'
   };
 
   const roleMeta = {
-    patient: { label: 'Patient Portal', icon: User, badgeClass: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
+    patient: { label: 'Patient Portal', icon: User, badgeClass: 'text-amber-900 bg-amber-50 border-amber-300 font-semibold' },
     doctor: { label: 'Attending Doctor', icon: Stethoscope, badgeClass: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
     receptionist: { label: 'Reception Desk', icon: Building, badgeClass: 'text-sky-700 bg-sky-50 border-sky-200' },
     admin: { label: 'System Admin', icon: Shield, badgeClass: 'text-purple-700 bg-purple-50 border-purple-200' }
@@ -73,13 +102,6 @@ export const Header = ({ setIsMobileOpen }) => {
     month: 'short',
     year: 'numeric'
   });
-
-  const handleSwitchToRole = (targetRole) => {
-    setShowRoleMenu(false);
-    setShowProfileMenu(false);
-    // Mandatory logout of current profile and redirect to login page for credentials
-    switchRoleWithLogout(targetRole);
-  };
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between shadow-xs">
@@ -98,7 +120,7 @@ export const Header = ({ setIsMobileOpen }) => {
         {isSidebarCollapsed && (
           <button
             onClick={() => setIsSidebarCollapsed(false)}
-            className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition shadow-xs cursor-pointer"
+            className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold transition shadow-xs cursor-pointer"
             title="Open sidebar navigation"
           >
             <PanelLeftOpen className="w-4 h-4" />
@@ -108,7 +130,7 @@ export const Header = ({ setIsMobileOpen }) => {
 
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">MHC-PMS</span>
+            <span className="text-xs text-amber-500 font-black tracking-tight hidden sm:inline">Aarogyam</span>
             <span className="text-xs text-slate-300 hidden sm:inline">/</span>
             <div className={`hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-bold uppercase tracking-wider ${activeRoleMeta.badgeClass}`}>
               <RoleIcon className="w-3 h-3" />
@@ -122,20 +144,58 @@ export const Header = ({ setIsMobileOpen }) => {
       </div>
 
       {/* Right side: Quick Actions + Notifications + Profile */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* Patient quick booking shortcut */}
-        {currentRole === 'patient' && (
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        {/* Back to Home Page shortcut */}
+        <button
+          onClick={() => {
+            logout();
+            setPublicView('landing');
+          }}
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition shadow-2xs cursor-pointer border border-slate-200/70"
+          title="Return to Home Page"
+        >
+          <Home className="w-3.5 h-3.5 text-slate-600" />
+          <span>Home Page</span>
+        </button>
+
+        {/* Staff Quick Action: Cloud Sync Button */}
+        {currentRole !== 'patient' && (
+          <button
+            onClick={handleHeaderSync}
+            disabled={isHeaderSyncing || firebaseSyncStatus.isSyncing}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-400/40 text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-50"
+            title="Synchronize all hospital collections to Google Cloud Firebase"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isHeaderSyncing || firebaseSyncStatus.isSyncing ? 'animate-spin text-amber-400' : 'text-amber-400'}`} />
+            <span className="hidden md:inline">{isHeaderSyncing || firebaseSyncStatus.isSyncing ? 'Syncing...' : 'Cloud Sync'}</span>
+          </button>
+        )}
+
+        {/* Staff Quick Action: Open Tabular EHR (when not on records) */}
+        {currentRole !== 'patient' && activeTab !== 'records' && (
+          <button
+            onClick={() => setActiveTab('records')}
+            className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black transition shadow-xs cursor-pointer"
+            title="Open live multi-sheet Tabular EHR spreadsheet on website"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-950" />
+            <span>Tabular EHR</span>
+          </button>
+        )}
+
+        {/* Patient quick booking shortcut (when not on dashboard where prominent hero button exists) */}
+        {currentRole === 'patient' && activeTab !== 'dashboard' && (
           <button
             onClick={() => setIsBookingModalOpen(true)}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+            className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition shadow-xs cursor-pointer"
           >
-            <CalendarPlus className="w-4 h-4" />
+            <CalendarPlus className="w-4 h-4 text-slate-950" />
             <span>Book Appointment</span>
           </button>
         )}
 
         {/* Date Indicator */}
-        <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-xl text-xs text-slate-600 font-medium">
+        <div className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100/90 border border-slate-200/60 rounded-xl text-xs text-slate-600 font-medium">
           <Calendar className="w-3.5 h-3.5 text-slate-500" />
           <span>{currentDate}</span>
         </div>
@@ -153,7 +213,7 @@ export const Header = ({ setIsMobileOpen }) => {
           >
             <Bell className="w-5 h-5" />
             {broadcastNotifications && broadcastNotifications.length > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full ring-2 ring-white animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white animate-pulse" />
             )}
           </button>
 
@@ -161,7 +221,7 @@ export const Header = ({ setIsMobileOpen }) => {
             <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 z-50 animate-in fade-in zoom-in-95">
               <div className="px-4 pb-2 border-b border-slate-100 flex items-center justify-between">
                 <h4 className="text-xs font-bold text-slate-900">System Notifications & Broadcasts</h4>
-                <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold">
                   {broadcastNotifications?.length || 0} Alerts
                 </span>
               </div>
@@ -170,7 +230,7 @@ export const Header = ({ setIsMobileOpen }) => {
                   <div key={notif.id} className="p-3 hover:bg-slate-50 transition text-left">
                     <div className="flex items-center justify-between mb-1">
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        notif.priority === 'High' ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'
+                        notif.priority === 'High' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-900'
                       }`}>
                         {notif.priority}
                       </span>
@@ -185,84 +245,12 @@ export const Header = ({ setIsMobileOpen }) => {
           )}
         </div>
 
-        {/* Switch Role / Account Menu (Requires credentials & logs out current profile) */}
-        <div className="relative">
-          <button
-            onClick={() => {
-              setShowRoleMenu(!showRoleMenu);
-              setShowNotifications(false);
-              setShowProfileMenu(false);
-            }}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition cursor-pointer"
-            title="Switch profile role (Requires credential sign in)"
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">Switch Role</span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
-          </button>
-
-          {showRoleMenu && (
-            <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 py-2.5 z-50 animate-in fade-in zoom-in-95">
-              <div className="px-3.5 py-1.5 border-b border-slate-100">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Switch Healthcare Role
-                </span>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  Switching logs you out of {currentUser?.fullName || 'current session'} and requires entering credentials for the target role.
-                </p>
-              </div>
-
-              <div className="p-1.5 space-y-1">
-                {[
-                  { role: 'doctor', label: 'Doctor', sub: 'Clinical Consultation Queue', icon: Stethoscope, color: 'text-emerald-600', badge: 'bg-emerald-50 text-emerald-700' },
-                  { role: 'receptionist', label: 'Receptionist', sub: 'Front Desk & Admissions', icon: Building, color: 'text-sky-600', badge: 'bg-sky-50 text-sky-700' },
-                  { role: 'admin', label: 'System Admin', sub: 'IT Governance & Reports', icon: Shield, color: 'text-purple-600', badge: 'bg-purple-50 text-purple-700' },
-                  { role: 'patient', label: 'Patient', sub: 'Health Portal & Prescriptions', icon: User, color: 'text-indigo-600', badge: 'bg-indigo-50 text-indigo-700' }
-                ].map(r => {
-                  const Icon = r.icon;
-                  const isCurrent = currentRole === r.role;
-                  return (
-                    <button
-                      key={r.role}
-                      onClick={() => handleSwitchToRole(r.role)}
-                      className={`w-full flex items-center justify-between p-2.5 text-xs rounded-xl font-medium text-left transition cursor-pointer ${
-                        isCurrent ? 'bg-slate-100 text-slate-900 border border-slate-200' : 'hover:bg-slate-50 text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`p-1.5 rounded-lg ${r.badge}`}>
-                          <Icon className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <span className="font-bold block truncate">{r.label}</span>
-                          <span className="text-[10px] text-slate-400 block truncate">{r.sub}</span>
-                        </div>
-                      </div>
-
-                      {isCurrent ? (
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md shrink-0">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 shrink-0 flex items-center gap-1">
-                          Log out & Sign In →
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* User Profile Menu */}
         <div className="relative">
           <button
             onClick={() => {
               setShowProfileMenu(!showProfileMenu);
               setShowNotifications(false);
-              setShowRoleMenu(false);
             }}
             className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer"
             aria-label="User Menu"
@@ -290,28 +278,23 @@ export const Header = ({ setIsMobileOpen }) => {
               </div>
 
               <div className="py-1">
-                {currentRole === 'patient' && (
-                  <button
-                    onClick={() => {
-                      setActiveTab('profile');
-                      setShowProfileMenu(false);
-                    }}
-                    className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                  >
-                    <User className="w-4 h-4 text-slate-400" />
-                    <span>My Profile & EHR Settings</span>
-                  </button>
-                )}
-
                 <button
                   onClick={() => {
+                    setActiveTab('profile');
                     setShowProfileMenu(false);
-                    setShowRoleMenu(true);
                   }}
-                  className="w-full px-4 py-2 text-xs text-indigo-600 hover:bg-indigo-50 flex items-center gap-2 font-medium"
+                  className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer font-medium"
                 >
-                  <ArrowRightLeft className="w-4 h-4 text-indigo-500" />
-                  <span>Switch Role / Profile</span>
+                  <User className="w-4 h-4 text-amber-600" />
+                  <span>
+                    {currentRole === 'patient' 
+                      ? 'My Profile & Account Settings' 
+                      : currentRole === 'doctor'
+                      ? 'Doctor Profile & Photo'
+                      : currentRole === 'receptionist'
+                      ? 'Front Desk Profile & Photo'
+                      : 'Admin Profile & Photo'}
+                  </span>
                 </button>
 
                 <button
@@ -322,7 +305,7 @@ export const Header = ({ setIsMobileOpen }) => {
                   className="w-full px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-medium"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out ({currentRole.toUpperCase()})</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>

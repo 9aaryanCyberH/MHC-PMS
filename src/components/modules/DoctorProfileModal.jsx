@@ -31,10 +31,10 @@ export const DoctorProfileModal = ({ doctor, isOpen, onClose, onCheckAvailabilit
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 text-white p-6 relative">
+          <div className="bg-gradient-to-r from-amber-50 via-amber-100/60 to-slate-50 border-b border-amber-200/80 text-slate-900 p-6 relative">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+              className="absolute top-4 right-4 p-1.5 rounded-xl bg-black/5 hover:bg-black/10 text-slate-700 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -43,17 +43,17 @@ export const DoctorProfileModal = ({ doctor, isOpen, onClose, onCheckAvailabilit
               <img
                 src={doctor.avatar}
                 alt={doctor.name}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-400 shadow-lg"
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
               />
               <div className="text-center sm:text-left">
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/40">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-200/60 text-amber-950 px-2.5 py-0.5 rounded-full border border-amber-300">
                   {doctor.speciality}
                 </span>
-                <h3 className="text-lg sm:text-xl font-bold text-white mt-1">{doctor.name}</h3>
-                <p className="text-xs text-indigo-200">{doctor.title}</p>
-                <div className="flex items-center justify-center sm:justify-start gap-3 mt-2 text-xs text-slate-300">
-                  <span className="flex items-center gap-1 text-amber-300 font-bold">
-                    <Star className="w-3.5 h-3.5 fill-amber-300" />
+                <h3 className="text-lg sm:text-xl font-bold text-slate-950 mt-1">{doctor.name}</h3>
+                <p className="text-xs text-slate-600 font-medium">{doctor.title}</p>
+                <div className="flex items-center justify-center sm:justify-start gap-3 mt-2 text-xs text-slate-600">
+                  <span className="flex items-center gap-1 text-amber-600 font-bold">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                     {doctor.rating} ({doctor.reviewCount} Reviews)
                   </span>
                   <span>•</span>
@@ -68,7 +68,7 @@ export const DoctorProfileModal = ({ doctor, isOpen, onClose, onCheckAvailabilit
             {/* Clinical Bio */}
             <div>
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-1.5 flex items-center gap-1.5">
-                <Stethoscope className="w-3.5 h-3.5 text-indigo-600" />
+                <Stethoscope className="w-3.5 h-3.5 text-amber-500" />
                 <span>Professional Background</span>
               </h4>
               <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-2xl border border-slate-100">
@@ -78,9 +78,9 @@ export const DoctorProfileModal = ({ doctor, isOpen, onClose, onCheckAvailabilit
 
             {/* Timings & Room Info Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-900 block flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-indigo-600" />
+              <div className="p-3 bg-amber-50/60 rounded-2xl border border-amber-200/70 space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-950 block flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-amber-600" />
                   Consultation Schedule
                 </span>
                 <p className="font-bold text-slate-900">{doctor.availableDays.join(', ')}</p>
@@ -100,7 +100,7 @@ export const DoctorProfileModal = ({ doctor, isOpen, onClose, onCheckAvailabilit
             {/* Areas of Expertise */}
             <div>
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5 text-indigo-600" />
+                <Award className="w-3.5 h-3.5 text-amber-500" />
                 <span>Clinical Specializations</span>
               </h4>
               <div className="flex flex-wrap gap-1.5">
@@ -115,13 +115,13 @@ export const DoctorProfileModal = ({ doctor, isOpen, onClose, onCheckAvailabilit
             {/* Education & Credentials */}
             <div>
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
-                <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+                <GraduationCap className="w-3.5 h-3.5 text-amber-500" />
                 <span>Education & Medical Qualifications</span>
               </h4>
               <ul className="space-y-1.5 text-slate-600">
                 {doctor.education.map((edu, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
                     <span>{edu}</span>
                   </li>
                 ))}
@@ -148,7 +148,7 @@ export const DoctorProfileModal = ({ doctor, isOpen, onClose, onCheckAvailabilit
                 onClose();
                 onCheckAvailability(doctor.id);
               }}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition cursor-pointer"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-md shadow-amber-400/20 transition cursor-pointer"
             >
               <CalendarClock className="w-4 h-4" />
               <span>Check Doctor Availability</span>

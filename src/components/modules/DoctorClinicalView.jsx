@@ -24,7 +24,14 @@ import {
   Sparkles,
   Heart,
   TrendingDown,
-  Building
+  Building,
+  Upload,
+  Camera,
+  ImageIcon,
+  FileSpreadsheet,
+  RefreshCw,
+  Cloud,
+  Database
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -42,11 +49,24 @@ export const DoctorClinicalView = () => {
     patientRecordsList,
     patientRiskAlerts,
     updatePatientRiskAlert,
-    switchRoleWithLogout,
     activeTab,
     setActiveTab,
-    showToast
+    showToast,
+    exportMasterDatabaseToExcel,
+    syncAllCollectionsToFirebase,
+    firebaseSyncStatus
   } = useApp();
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncDatabase = async () => {
+    setIsSyncing(true);
+    try {
+      await syncAllCollectionsToFirebase();
+    } finally {
+      setTimeout(() => setIsSyncing(false), 700);
+    }
+  };
 
   // Synchronize internal subtab with sidebar activeTab
   const currentSubTab = activeTab && activeTab.startsWith('doc-') 
@@ -100,13 +120,32 @@ export const DoctorClinicalView = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({
     fullName: doctorProfile?.fullName || 'Dr. Shashank Pandey',
-    title: doctorProfile?.title || 'Senior Consultant Psychiatrist',
-    qualifications: doctorProfile?.qualifications || 'MBBS, MD (Psychiatry), DPM, FIPS',
+    title: doctorProfile?.title || 'Chief Consultant Psychiatrist & Clinical Director',
+    qualifications: doctorProfile?.qualifications || 'MBBS, MD (Psychiatry - NIMHANS), DNB, FIPS',
     consultationFee: doctorProfile?.consultationFee || 1200,
     opdRoom: doctorProfile?.opdRoom || 'OPD Suite 204, East Wing',
     schedule: doctorProfile?.schedule || 'Monday to Saturday, 09:00 AM - 02:00 PM',
-    bio: doctorProfile?.bio || 'Senior consultant psychiatrist with extensive experience in affective mood disorders.'
+    bio: doctorProfile?.bio || 'Senior consultant psychiatrist specializing in adult mood disorders and psychopharmacology.',
+    avatar: doctorProfile?.avatar || 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300',
+    phone: doctorProfile?.phone || '+91 98112 34567',
+    email: doctorProfile?.email || 'shashank.pandey@mhc-pms.org'
   });
+
+  const handleDoctorPhotoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Image file size should be under 2MB', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileForm(prev => ({ ...prev, avatar: reader.result }));
+        showToast('Doctor photo loaded from local device!');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Currently selected patient record
   const currentPatient = (patientRecordsList || []).find(p => p.id === selectedPatientId) || patientRecordsList?.[0] || {
@@ -231,11 +270,36 @@ export const DoctorClinicalView = () => {
 
           <div className="flex flex-wrap items-center gap-2">
             <button
+              onClick={() => setActiveTab('records')}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 transition flex items-center gap-1.5 shadow-md cursor-pointer font-black"
+              title="Open full interactive multi-sheet EHR spreadsheet on website"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-slate-950" />
+              <span>Tabular EHR (Excel)</span>
+            </button>
+            <button
+              onClick={handleSyncDatabase}
+              disabled={isSyncing}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-emerald-400/40 transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+              title="Synchronize all clinical collections to Google Cloud Firebase"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Database'}</span>
+            </button>
+            <button
+              onClick={exportMasterDatabaseToExcel}
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-800/80 hover:bg-slate-700 text-emerald-200 border border-emerald-400/30 transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              title="Export database to Excel (.xls)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Export to Excel</span>
+            </button>
+            <button
               onClick={() => {
                 setRxForm(prev => ({ ...prev, patientName: currentPatient.fullName, patientId: currentPatient.id }));
                 setIsRxModalOpen(true);
               }}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
             >
               <Pill className="w-4 h-4" />
               <span>Write e-Prescription</span>
@@ -245,17 +309,10 @@ export const DoctorClinicalView = () => {
                 setLabOrderForm(prev => ({ ...prev, patientName: currentPatient.fullName, patientId: currentPatient.id }));
                 setIsOrderLabModalOpen(true);
               }}
-              className="px-4 py-2 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
+              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition flex items-center gap-1.5 shadow-md cursor-pointer"
             >
               <FlaskConical className="w-4 h-4" />
               <span>Order Lab Test</span>
-            </button>
-            <button
-              onClick={() => switchRoleWithLogout('patient')}
-              className="px-3 py-2 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 border border-white/20 transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowRightLeft className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Switch Role</span>
             </button>
           </div>
         </div>
@@ -377,19 +434,27 @@ export const DoctorClinicalView = () => {
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => {
-                            setSelectedPatientId('PT-88204');
+                            setSelectedPatientId(apt.patientId || 'PT-88204');
                             setCurrentSubTab('patients');
                           }}
                           className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition cursor-pointer"
+                          title="Open clinical dossier and psychiatric assessment"
                         >
-                          Open EHR
+                          Dossier
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('records')}
+                          className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition cursor-pointer"
+                          title="Open full interactive Tabular EHR spreadsheet on website"
+                        >
+                          Tabular EHR
                         </button>
                         <button
                           onClick={() => {
                             setRxForm(prev => ({ ...prev, patientName: apt.patientName || 'Aaryan Kumar' }));
                             setIsRxModalOpen(true);
                           }}
-                          className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition cursor-pointer"
+                          className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition cursor-pointer"
                         >
                           Prescribe
                         </button>
@@ -408,6 +473,34 @@ export const DoctorClinicalView = () => {
       {/* ========================================================================= */}
       {currentSubTab === 'patients' && (
         <div className="space-y-6">
+          {/* Top Master Tabular EHR Access Banner */}
+          <div className="bg-amber-50/80 border border-amber-300 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 shadow-xs">
+                <FileSpreadsheet className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-black text-slate-950">Central Electronic Health Records (EHR) — Tabular Excel Engine</h4>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    Live Web Spreadsheets
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  View full multi-sheet hospital database tables (Patients, Appointments, Prescriptions, Labs, Billing, Visitors, System Logs) with live search and cloud sync.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setActiveTab('records')}
+              className="px-5 py-2.5 rounded-2xl bg-slate-950 hover:bg-slate-800 text-amber-300 font-black text-xs transition cursor-pointer flex items-center gap-2 self-start sm:self-auto shrink-0 shadow-sm border border-amber-400/40"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
+              <span>Open Tabular EHR Database</span>
+            </button>
+          </div>
+
           {/* Patient Selector Pills */}
           <div className="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 overflow-x-auto">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Select Outpatient:</span>
@@ -443,7 +536,15 @@ export const DoctorClinicalView = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setActiveTab('records')}
+                  className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-400/40 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="Open full interactive multi-sheet Tabular EHR on website"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Tabular EHR (Excel)</span>
+                </button>
                 <button
                   onClick={() => {
                     setRiskForm({
@@ -490,7 +591,7 @@ export const DoctorClinicalView = () => {
               </div>
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <p className="text-[10px] text-slate-400 uppercase font-bold">Primary Diagnosis</p>
-                <p className="text-xs font-bold text-indigo-700 truncate mt-0.5">{currentPatient.primaryDiagnosis}</p>
+                <p className="text-xs font-bold text-amber-700 truncate mt-0.5">{currentPatient.primaryDiagnosis}</p>
               </div>
             </div>
 
@@ -498,7 +599,7 @@ export const DoctorClinicalView = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 space-y-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-                  <Brain className="w-4 h-4 text-indigo-600" />
+                  <Brain className="w-4 h-4 text-amber-500" />
                   <span>Clinical Psychiatric Assessment</span>
                 </h4>
                 {medicalRecords.diagnoses.map((d, i) => (
@@ -578,7 +679,7 @@ export const DoctorClinicalView = () => {
                     <td className="py-3 px-4 font-bold text-slate-900">{rx.patientName || 'Aaryan Kumar'}</td>
                     <td className="py-3 px-4">
                       <p className="font-bold text-slate-900">{rx.medicineName}</p>
-                      <span className="text-[10px] text-indigo-700 font-semibold">{rx.category}</span>
+                      <span className="text-[10px] text-amber-700 font-semibold">{rx.category}</span>
                     </td>
                     <td className="py-3 px-4">
                       <p className="font-semibold text-slate-800">{rx.dosage}</p>
@@ -1061,7 +1162,38 @@ export const DoctorClinicalView = () => {
               <button onClick={() => setIsEditProfileOpen(false)} className="text-slate-400 font-bold">✕</button>
             </div>
 
-            <form onSubmit={handleUpdateProfile} className="mt-4 space-y-3">
+            <form onSubmit={handleUpdateProfile} className="mt-4 space-y-3.5">
+              {/* DOCTOR PHOTO / AVATAR EDITING */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200">
+                <label className="block font-bold text-slate-800 mb-2">Doctor Profile Photo</label>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={profileForm.avatar || "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300"}
+                    alt="Doctor preview"
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-emerald-500 shadow-xs shrink-0"
+                  />
+                  <div className="flex-1 space-y-2">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer transition shadow-2xs">
+                      <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Upload New Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleDoctorPhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="Or paste direct image URL"
+                      value={profileForm.avatar}
+                      onChange={(e) => setProfileForm({ ...profileForm, avatar: e.target.value })}
+                      className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl bg-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Full Name</label>
@@ -1104,6 +1236,27 @@ export const DoctorClinicalView = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Contact Phone</label>
+                  <input
+                    type="text"
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">OPD Schedule Hours</label>
+                  <input
+                    type="text"
+                    value={profileForm.schedule}
+                    onChange={(e) => setProfileForm({ ...profileForm, schedule: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Medical Degrees & Qualifications</label>
                 <input
@@ -1117,7 +1270,7 @@ export const DoctorClinicalView = () => {
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Clinical Biography</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={profileForm.bio}
                   onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"

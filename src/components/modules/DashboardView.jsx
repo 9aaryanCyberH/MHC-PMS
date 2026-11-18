@@ -23,8 +23,7 @@ import {
   Users,
   Printer,
   ShieldAlert,
-  FileCheck,
-  Video
+  FileCheck
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Badge } from '../common/Badge';
@@ -46,34 +45,39 @@ export const DashboardView = () => {
   const [quickSpeciality, setQuickSpeciality] = useState('All Specialities');
   const [quickDate, setQuickDate] = useState('2026-09-18');
 
-  const upcomingAppointments = appointments.filter(a => a.status === 'Upcoming');
+  // Strict patient data isolation: only show logged-in patient's appointments & prescriptions
+  const upcomingAppointments = appointments.filter(a => 
+    a.status === 'Upcoming' && (!patientProfile?.id || a.patientId === patientProfile.id || a.patientName === patientProfile.fullName)
+  );
   const nextAppointment = upcomingAppointments[0];
-  const recentPrescription = prescriptions[0];
-  const activeDiagnosis = medicalRecords.diagnoses[0];
-  const activeTreatment = medicalRecords.treatments[0];
-  const phq9Record = labRecords.find(l => l.id === 'LAB-2026-490');
-  const thyroidRecord = labRecords.find(l => l.id === 'LAB-2026-771');
+  
+  const patientPrescriptions = prescriptions.filter(p => 
+    !patientProfile?.id || p.patientId === patientProfile.id || p.patientName === patientProfile.fullName
+  );
+  const recentPrescription = patientPrescriptions[0] || prescriptions[0];
 
-  // Care team members
+  const activeDiagnosis = medicalRecords?.diagnoses ? medicalRecords.diagnoses[0] : null;
+  const activeTreatment = medicalRecords?.treatments ? medicalRecords.treatments[0] : null;
+
+  const patientLabRecords = labRecords.filter(l => 
+    !patientProfile?.id || l.patientId === patientProfile.id || l.patientName === patientProfile.fullName
+  );
+  const phq9Record = patientLabRecords.find(l => l.category?.includes('Psychometric')) || patientLabRecords[0] || labRecords[0];
+  const thyroidRecord = patientLabRecords.find(l => l.category?.includes('Biochemical') || l.category?.includes('Endocrine')) || patientLabRecords[1] || labRecords[1];
+
+  // Care team members (Official attending staff - no dummy doctors)
   const careTeam = [
     {
       name: "Dr. Shashank Pandey",
-      role: "Lead Consulting Psychiatrist",
-      speciality: "Adult & Neuropsychiatry",
+      role: "Lead Consulting Psychiatrist & Clinical Director",
+      speciality: "Adult & Neuropsychiatry (NIMHANS)",
       avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300",
       id: "DOC-001"
     },
     {
-      name: "Dr. Rajesh Verma",
-      role: "Senior Clinical Psychologist",
-      speciality: "Cognitive Behavioral Therapy (CBT)",
-      avatar: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=300",
-      id: "DOC-003"
-    },
-    {
-      name: "Preeti Sharma",
-      role: "Nurse Coordinator & Triage",
-      speciality: "OPD Psychiatric Care & Vitals",
+      name: "Nurse Preeti Sharma",
+      role: "Lead Nurse Coordinator & Triage",
+      speciality: "OPD Psychiatric Care & Vitals Telemetry",
       avatar: "https://images.unsplash.com/photo-1594824813718-495449704e6c?auto=format&fit=crop&q=80&w=300",
       id: "STAFF-01"
     }
@@ -86,46 +90,47 @@ export const DashboardView = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* 1. Welcome & Mental Wellness Overview Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-indigo-950 via-slate-900 to-indigo-900 text-white p-6 sm:p-8 shadow-xl">
+      {/* 1. Luminous Apollo-Style Welcome & Health Overview Banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-amber-500/15 via-amber-100/50 to-slate-50 border border-amber-200/90 p-6 sm:p-8 shadow-xs">
         {/* Soft ambient glow */}
-        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-80 h-80 rounded-full bg-blue-500/15 blur-3xl pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 -mb-10 w-64 h-64 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none" />
+        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-80 h-80 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
+        <div className="absolute left-1/3 bottom-0 -mb-10 w-64 h-64 rounded-full bg-sky-400/10 blur-2xl pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-3 py-0.5 rounded-full border border-indigo-500/30">
-                Patient Portal
+              <span className="text-xs font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-3 py-1 rounded-full shadow-xs">
+                Aarogyam Patient Health Portal
               </span>
-              <span className="text-xs text-indigo-200">Patient ID: <strong className="font-mono bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-700/50">{patientProfile.id}</strong></span>
-              <span className="text-xs text-emerald-300 font-medium flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Care Plan Active
+              <span className="text-xs text-slate-600 font-medium">
+                Patient ID: <strong className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 text-slate-900">{patientProfile.id}</strong>
+              </span>
+              <span className="text-xs text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Care Plan Active
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">
               Welcome back, {patientProfile.fullName}
             </h2>
-            <p className="mt-1.5 text-xs sm:text-sm text-slate-200 max-w-2xl leading-relaxed">
-              Your mental wellness portal: check psychiatrist availability in real-time, schedule consultations, view electronic health records (EHR), track active prescriptions, and review psychometric scores.
+            <p className="mt-1.5 text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
+              Your confidential mental wellness portal: check psychiatrist availability in real-time, book consultations, track active prescriptions, and view diagnostic scales.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
-              onClick={() => navigateToCheckAvailability()}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-linear-to-r from-indigo-500 to-blue-500 text-white font-bold text-xs shadow-lg hover:shadow-indigo-500/30 hover:scale-[1.02] transition cursor-pointer"
+              onClick={() => setIsBookingModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 active:scale-[0.99] text-slate-950 font-bold text-xs shadow-md shadow-amber-400/25 transition cursor-pointer"
             >
-              <CalendarClock className="w-4 h-4 text-white" />
-              <span>Check Doctor Availability</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <CalendarPlus className="w-4 h-4 text-slate-950" />
+              <span>Book Appointment</span>
             </button>
             <button
-              onClick={() => setIsBookingModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur transition border border-white/20 cursor-pointer"
+              onClick={() => navigateToCheckAvailability()}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-slate-50 active:scale-[0.99] text-slate-800 text-xs font-bold transition border border-slate-200 shadow-2xs cursor-pointer"
             >
-              <CalendarPlus className="w-4 h-4 text-indigo-300" />
-              <span>Book Appointment</span>
+              <CalendarClock className="w-4 h-4 text-amber-600" />
+              <span>Doctor Availability</span>
             </button>
           </div>
         </div>
@@ -144,10 +149,10 @@ export const DashboardView = () => {
             </div>
           </div>
           <button
-            onClick={() => setActiveTab('records')}
+            onClick={() => setActiveTab('prescriptions-lab')}
             className="text-amber-800 hover:text-amber-950 font-bold underline text-[11px] shrink-0 self-end sm:self-auto cursor-pointer"
           >
-            Review Health Records
+            View Prescriptions
           </button>
         </div>
       )}
@@ -157,13 +162,13 @@ export const DashboardView = () => {
         {/* Next Appointment Card */}
         <div 
           onClick={() => setActiveTab('appointments')}
-          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-md transition cursor-pointer group"
+          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-amber-400 hover:shadow-md transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition shadow-2xs">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-400 group-hover:text-slate-950 transition shadow-2xs">
               <CalendarCheck className="w-5 h-5" />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300">
               {upcomingAppointments.length} Scheduled
             </span>
           </div>
@@ -171,7 +176,7 @@ export const DashboardView = () => {
           <h4 className="text-sm font-bold text-slate-900 mt-1 truncate">
             {nextAppointment ? nextAppointment.displayDate : 'No pending sessions'}
           </h4>
-          <p className="text-[11px] text-indigo-700 font-medium mt-0.5 truncate">
+          <p className="text-[11px] text-amber-700 font-semibold mt-0.5 truncate">
             {nextAppointment ? `with ${nextAppointment.doctorName}` : 'Schedule a consultation'}
           </p>
         </div>
@@ -179,7 +184,7 @@ export const DashboardView = () => {
         {/* Active Prescriptions Card */}
         <div 
           onClick={() => setActiveTab('prescriptions-lab')}
-          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-md transition cursor-pointer group"
+          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-amber-400 hover:shadow-md transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition shadow-2xs">
@@ -201,7 +206,7 @@ export const DashboardView = () => {
         {/* Psychometric Score Card (PHQ-9) */}
         <div 
           onClick={() => setActiveTab('prescriptions-lab')}
-          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-md transition cursor-pointer group"
+          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-amber-400 hover:shadow-md transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition shadow-2xs">
@@ -222,8 +227,8 @@ export const DashboardView = () => {
 
         {/* Primary Diagnosis & Treatment Card */}
         <div 
-          onClick={() => setActiveTab('records')}
-          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-md transition cursor-pointer group"
+          onClick={() => setActiveTab('prescriptions-lab')}
+          className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-amber-400 hover:shadow-md transition cursor-pointer group"
         >
           <div className="flex items-center justify-between">
             <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition shadow-2xs">
@@ -251,7 +256,7 @@ export const DashboardView = () => {
           <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700">
+                <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
                   <CalendarClock className="w-5 h-5" />
                 </div>
                 <div>
@@ -263,18 +268,18 @@ export const DashboardView = () => {
             </div>
 
             {nextAppointment ? (
-              <div className="mt-5 p-5 rounded-2xl bg-linear-to-r from-slate-50 to-indigo-50/40 border border-slate-200/80">
+              <div className="mt-5 p-5 rounded-2xl bg-linear-to-r from-amber-50/60 via-slate-50 to-white border border-amber-200/70">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5">
                     <img
                       src={nextAppointment.doctorAvatar}
                       alt={nextAppointment.doctorName}
-                      className="w-13 h-13 rounded-2xl object-cover border-2 border-white shadow-md"
+                      className="w-13 h-13 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
                     />
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">{nextAppointment.doctorName}</h4>
-                      <p className="text-xs font-medium text-indigo-700">{nextAppointment.doctorSpeciality}</p>
-                      <span className="text-[10px] text-slate-500 font-mono bg-white px-2 py-0.5 rounded border border-slate-200 mt-1 inline-block">
+                      <p className="text-xs font-semibold text-amber-700">{nextAppointment.doctorSpeciality}</p>
+                      <span className="text-[10px] text-slate-600 font-mono bg-white px-2 py-0.5 rounded border border-slate-200 mt-1 inline-block">
                         Booking ID: {nextAppointment.id}
                       </span>
                     </div>
@@ -282,7 +287,7 @@ export const DashboardView = () => {
 
                   <div className="sm:text-right space-y-1">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white rounded-xl shadow-xs text-xs font-bold text-slate-800 border border-slate-200">
-                      <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
                       <span>{nextAppointment.time}</span>
                     </div>
                     <p className="text-xs font-semibold text-slate-700">{nextAppointment.displayDate}</p>
@@ -293,17 +298,8 @@ export const DashboardView = () => {
                   <div>
                     <span className="text-slate-500 block text-[11px]">Consultation Modality:</span>
                     <span className="font-semibold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                      {nextAppointment.type === 'Online Consultation' ? (
-                        <>
-                          <Video className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Tele-Therapy Video Link</span>
-                        </>
-                      ) : (
-                        <>
-                          <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>In-Person Clinic Visit</span>
-                        </>
-                      )}
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>In-Person Clinic Visit (OPD)</span>
                     </span>
                   </div>
                   <div>
@@ -319,13 +315,13 @@ export const DashboardView = () => {
                 <div className="mt-5 flex flex-wrap items-center justify-end gap-2.5">
                   <button
                     onClick={() => setActiveTab('appointments')}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-indigo-800 bg-indigo-100/80 hover:bg-indigo-200 transition cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition cursor-pointer"
                   >
                     View All Appointments
                   </button>
                   <button
                     onClick={() => navigateToCheckAvailability(nextAppointment.doctorId)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 shadow-sm shadow-amber-400/20 transition cursor-pointer"
                   >
                     Check Doctor's Availability
                   </button>
@@ -336,7 +332,7 @@ export const DashboardView = () => {
                 <p className="text-xs text-slate-500">You currently have no upcoming appointments scheduled.</p>
                 <button
                   onClick={() => navigateToCheckAvailability()}
-                  className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition cursor-pointer"
+                  className="mt-3 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-bold transition cursor-pointer shadow-xs"
                 >
                   Find Available Specialist Slots
                 </button>
@@ -344,23 +340,23 @@ export const DashboardView = () => {
             )}
           </div>
 
-          {/* Quick Doctor Availability Search Widget */}
-          <div className="p-6 rounded-3xl bg-linear-to-br from-indigo-900 via-slate-900 to-indigo-950 text-white shadow-xl relative overflow-hidden">
+          {/* Quick Doctor Availability Search Widget - Lighter Apollo Style */}
+          <div className="p-6 rounded-3xl bg-linear-to-br from-amber-50/80 via-white to-amber-100/40 text-slate-900 border border-amber-200/90 shadow-sm relative overflow-hidden">
             <div className="relative z-10 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="bg-blue-500/30 text-blue-200 border border-blue-400/40 font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    <span className="bg-amber-200/70 text-amber-950 border border-amber-300 font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                       Specialist Availability Finder
                     </span>
-                    <span className="text-xs text-indigo-200">Real-Time Schedule</span>
+                    <span className="text-xs text-amber-800 font-semibold">Real-Time Schedule</span>
                   </div>
-                  <h3 className="text-lg font-bold">Query Doctor Availability & Timetables</h3>
-                  <p className="text-xs text-slate-300 max-w-xl">
+                  <h3 className="text-lg font-bold text-slate-950">Query Doctor Availability & Timetables</h3>
+                  <p className="text-xs text-slate-600 max-w-xl">
                     Search certified clinical psychologists and consulting psychiatrists by medical discipline, date, and preferred time window.
                   </p>
                 </div>
-                <div className="hidden sm:flex w-14 h-14 rounded-2xl bg-indigo-600/30 border border-indigo-400/30 items-center justify-center text-indigo-300 shrink-0">
+                <div className="hidden sm:flex w-14 h-14 rounded-2xl bg-amber-100 border border-amber-300 items-center justify-center text-amber-700 shrink-0">
                   <CalendarClock className="w-7 h-7" />
                 </div>
               </div>
@@ -368,11 +364,11 @@ export const DashboardView = () => {
               {/* Quick Search Form */}
               <form onSubmit={handleQuickAvailabilitySearch} className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                 <div>
-                  <label className="block text-[11px] font-semibold text-indigo-200 mb-1">Medical Speciality</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Medical Speciality</label>
                   <select 
                     value={quickSpeciality} 
                     onChange={(e) => setQuickSpeciality(e.target.value)}
-                    className="w-full text-xs bg-slate-800/90 text-white border border-slate-700 rounded-xl px-3 py-2 outline-hidden focus:ring-2 focus:ring-indigo-400 cursor-pointer"
+                    className="w-full text-xs bg-white text-slate-800 border border-slate-300 rounded-xl px-3 py-2 outline-hidden focus:ring-2 focus:ring-amber-400 focus:border-amber-400 cursor-pointer"
                   >
                     <option value="All Specialities">All Specialities</option>
                     <option value="Adult Psychiatry">Adult Psychiatry</option>
@@ -383,19 +379,19 @@ export const DashboardView = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-indigo-200 mb-1">Preferred Date</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Preferred Date</label>
                   <input 
                     type="date" 
                     value={quickDate}
                     onChange={(e) => setQuickDate(e.target.value)}
-                    className="w-full text-xs bg-slate-800/90 text-white border border-slate-700 rounded-xl px-3 py-2 outline-hidden focus:ring-2 focus:ring-indigo-400 cursor-pointer"
+                    className="w-full text-xs bg-white text-slate-800 border border-slate-300 rounded-xl px-3 py-2 outline-hidden focus:ring-2 focus:ring-amber-400 focus:border-amber-400 cursor-pointer"
                   />
                 </div>
 
                 <div className="flex items-end">
                   <button
                     type="submit"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer h-[35px]"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold rounded-xl shadow-md shadow-amber-400/20 transition cursor-pointer h-[35px]"
                   >
                     <Search className="w-3.5 h-3.5" />
                     <span>Search Slots</span>
@@ -409,7 +405,7 @@ export const DashboardView = () => {
           <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700">
+                <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
@@ -419,7 +415,7 @@ export const DashboardView = () => {
               </div>
               <button
                 onClick={() => setActiveTab('doctors')}
-                className="text-xs font-bold text-indigo-700 hover:text-indigo-900 hover:underline cursor-pointer"
+                className="text-xs font-bold text-amber-700 hover:text-amber-900 hover:underline cursor-pointer"
               >
                 Specialist Directory →
               </button>
@@ -436,7 +432,7 @@ export const DashboardView = () => {
                     />
                     <div>
                       <h4 className="text-xs font-bold text-slate-900">{member.name}</h4>
-                      <p className="text-[11px] text-indigo-700 font-medium">{member.role}</p>
+                      <p className="text-[11px] text-amber-700 font-semibold">{member.role}</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between">
@@ -444,7 +440,7 @@ export const DashboardView = () => {
                     {member.id.startsWith('DOC') && (
                       <button
                         onClick={() => navigateToCheckAvailability(member.id)}
-                        className="text-[11px] font-bold text-indigo-700 hover:underline cursor-pointer"
+                        className="text-[11px] font-bold text-amber-700 hover:underline cursor-pointer"
                       >
                         Availability
                       </button>
@@ -467,7 +463,7 @@ export const DashboardView = () => {
               </div>
               <button 
                 onClick={() => setActiveTab('prescriptions-lab')}
-                className="text-[11px] text-indigo-700 font-semibold hover:underline cursor-pointer"
+                className="text-[11px] text-amber-700 font-semibold hover:underline cursor-pointer"
               >
                 View All
               </button>
@@ -508,12 +504,12 @@ export const DashboardView = () => {
           <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-indigo-600" />
+                <FileCheck className="w-4 h-4 text-amber-500" />
                 <h3 className="text-xs font-bold text-slate-900">Psychometrics & Lab Reports</h3>
               </div>
               <button 
                 onClick={() => setActiveTab('prescriptions-lab')}
-                className="text-[11px] text-indigo-700 font-semibold hover:underline cursor-pointer"
+                className="text-[11px] text-amber-700 font-semibold hover:underline cursor-pointer"
               >
                 Full Results
               </button>
@@ -548,25 +544,22 @@ export const DashboardView = () => {
           <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-indigo-600" />
+                <Activity className="w-4 h-4 text-amber-500" />
                 <h3 className="text-xs font-bold text-slate-900">Baseline Vitals Telemetry</h3>
               </div>
-              <button 
-                onClick={() => setActiveTab('records')}
-                className="text-[11px] text-indigo-700 font-semibold hover:underline cursor-pointer"
-              >
-                EHR Vitals
-              </button>
+              <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                Verified Clinical
+              </span>
             </div>
 
             <div className="mt-3.5 grid grid-cols-2 gap-2 text-xs">
-              <div className="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+              <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200/70">
                 <span className="text-slate-500 text-[10px]">Blood Pressure</span>
                 <p className="font-bold text-slate-900 text-sm mt-0.5">{medicalRecords.vitals.bloodPressure}</p>
                 <span className="text-[10px] text-emerald-700 font-medium">Optimal</span>
               </div>
 
-              <div className="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+              <div className="p-3 rounded-2xl bg-amber-50/60 border border-amber-200/70">
                 <span className="text-slate-500 text-[10px]">Resting Heart Rate</span>
                 <p className="font-bold text-slate-900 text-sm mt-0.5">{medicalRecords.vitals.heartRate}</p>
                 <span className="text-[10px] text-emerald-700 font-medium">Normal</span>
