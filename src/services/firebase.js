@@ -1,14 +1,19 @@
 // Google Cloud Firebase Free Tier (Spark Plan) Service for Aarogyam MHC-PMS
-// Connects to Cloud Firestore database via official REST API & Web SDK primitives
-// Zero external package dependency required - works natively in any browser/Vite environment
+// Official Modular Firebase Web SDK v13+ & Cloud Firestore Integration
 
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
+
+// 1. Official Web App Firebase Configuration for Project "Aarogyam" (aarogyam-774e2)
 export const defaultFirebaseConfig = {
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "aarogyam-774e2",
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD-AarogyamDemoKey2026SparkPlan",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBSj6vsAtO9e1xEvqX8HAW4xwRVnBiOUf0",
   authDomain: "aarogyam-774e2.firebaseapp.com",
-  storageBucket: "aarogyam-774e2.appspot.com",
+  projectId: "aarogyam-774e2",
+  storageBucket: "aarogyam-774e2.firebasestorage.app",
   messagingSenderId: "460801024910",
-  appId: "1:460801024910:web:a89fc01e892c90"
+  appId: "1:460801024910:web:8bf5f6fe101c0b3ba93adf",
+  measurementId: "G-BYZQCFDSH5"
 };
 
 // Retrieve active configuration from localStorage or environment
@@ -34,6 +39,20 @@ export const isFirebaseConfigured = () => {
   const config = getActiveFirebaseConfig();
   return Boolean(config.projectId && config.projectId.trim().length > 0);
 };
+
+// 2. Initialize Firebase Web App & Services
+export const firebaseApp = !getApps().length ? initializeApp(getActiveFirebaseConfig()) : getApp();
+export const firestoreDb = getFirestore(firebaseApp);
+
+let analytics = null;
+if (typeof window !== 'undefined') {
+  isAnalyticsSupported().then(supported => {
+    if (supported) {
+      analytics = getAnalytics(firebaseApp);
+    }
+  }).catch(() => {});
+}
+export { analytics };
 
 // Helper: Convert clean JS object into Firestore REST API fields format
 const toFirestoreFields = (obj) => {
@@ -88,10 +107,10 @@ const fromFirestoreFields = (fields = {}) => {
   return obj;
 };
 
-// 1. Test Connection to Google Cloud Firebase Project
+// 3. Test Connection to Google Cloud Firebase Project
 export const testFirebaseConnection = async (customConfig = null) => {
   const config = customConfig || getActiveFirebaseConfig();
-  const projectId = config.projectId || "aarogyam-mhc-pms-firestore";
+  const projectId = config.projectId || "aarogyam-774e2";
 
   const endpoint = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents`;
   
@@ -120,11 +139,11 @@ export const testFirebaseConnection = async (customConfig = null) => {
 
   return {
     success: true,
-    message: `Google Cloud Firebase (Spark Free Tier) Connected & Ready! Offline Cloud Persistence active for "${projectId}".`
+    message: `Google Cloud Firebase (Spark Free Tier) Connected & Ready! Cloud Firestore active for "${projectId}".`
   };
 };
 
-// 2. Save a Document to Firestore (Free Tier REST API)
+// 4. Save a Document to Firestore
 export const saveRecordToFirestore = async (collectionName, docId, data) => {
   const config = getActiveFirebaseConfig();
   if (!config.projectId) {
@@ -161,10 +180,10 @@ export const saveRecordToFirestore = async (collectionName, docId, data) => {
   }
 };
 
-// 3. Batch Sync an Entire Collection to Firestore
+// 5. Batch Sync an Entire Collection to Firestore
 export const syncCollectionToFirestore = async (collectionName, items = []) => {
   const config = getActiveFirebaseConfig();
-  const projectId = config.projectId || "aarogyam-mhc-pms-firestore";
+  const projectId = config.projectId || "aarogyam-774e2";
 
   let successCount = 0;
   const cloudDocs = {};
@@ -204,7 +223,7 @@ export const syncCollectionToFirestore = async (collectionName, items = []) => {
   };
 };
 
-// 4. Fetch Collection Documents from Firestore
+// 6. Fetch Collection Documents from Firestore
 export const fetchCollectionFromFirestore = async (collectionName) => {
   const config = getActiveFirebaseConfig();
   if (!config.projectId) {
