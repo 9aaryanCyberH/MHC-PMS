@@ -19,7 +19,8 @@ import {
   testFirebaseConnection, 
   syncCollectionToFirestore, 
   fetchCollectionFromFirestore,
-  isFirebaseConfigured
+  isFirebaseConfigured,
+  saveRecordToFirestore
 } from '../services/firebase';
 import { 
   exportFullMHCWorkbook, 
@@ -919,6 +920,9 @@ export const AppProvider = ({ children }) => {
       setPatientProfiles(prev => ({ ...prev, [newId]: newPatientProfile }));
       setPatientRecordsList(prev => [newPatientProfile, ...prev]);
       setCurrentPatientId(newId);
+
+      // Real-time Cloud Firebase Firestore write
+      saveRecordToFirestore('patients', newId, newPatientProfile).catch(() => {});
     }
 
     const newAccount = {
@@ -941,6 +945,9 @@ export const AppProvider = ({ children }) => {
       [newId]: password,
       [cleanEmail]: password
     }));
+
+    // Real-time Cloud Firebase Firestore write for user accounts directory
+    saveRecordToFirestore('user_accounts', newId, newAccount).catch(() => {});
 
     logSystemEvent('Account Created', `New ${roleTitle} registered: ${fullName} (${cleanEmail})`);
     return { success: true, account: newAccount, id: newId, role: normalizedRole, defaultTab };
@@ -1061,8 +1068,7 @@ export const AppProvider = ({ children }) => {
 
     setPatientRecordsList(prev => [newRecord, ...prev]);
 
-    // Also register in user accounts
-    setUserAccounts(prev => [{
+    const newPatientAccount = {
       id: newId,
       name: patientData.fullName,
       email: newRecord.email,
@@ -1071,7 +1077,10 @@ export const AppProvider = ({ children }) => {
       registeredDate: new Date().toISOString().split('T')[0],
       lastLogin: 'Never',
       clinicNode: newRecord.clinicNode
-    }, ...prev]);
+    };
+
+    // Also register in user accounts
+    setUserAccounts(prev => [newPatientAccount, ...prev]);
 
     // Create profile entry
     setPatientProfiles(prev => ({
@@ -1081,6 +1090,10 @@ export const AppProvider = ({ children }) => {
         ...newRecord
       }
     }));
+
+    // Real-time Cloud Firebase Firestore write
+    saveRecordToFirestore('patients', newId, newRecord).catch(() => {});
+    saveRecordToFirestore('user_accounts', newId, newPatientAccount).catch(() => {});
 
     showToast(`Electronic Patient Record created for ${newRecord.fullName} (ID: ${newId})`);
     logSystemEvent('Patient Record Created', `New patient record registered: ${newRecord.fullName} (${newId})`);
@@ -1205,6 +1218,7 @@ export const AppProvider = ({ children }) => {
 
     setAppointments(prev => [newAppointment, ...prev]);
     showToast(`Appointment ${newId} confirmed successfully with ${newAppointment.doctorName}!`);
+    saveRecordToFirestore('appointments', newId, newAppointment).catch(() => {});
     logSystemEvent('Appointment Booked', `Booked consultation ${newId} for ${newAppointment.patientName}`);
     return newAppointment;
   };
