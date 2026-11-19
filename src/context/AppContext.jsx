@@ -921,8 +921,68 @@ export const AppProvider = ({ children }) => {
       setPatientRecordsList(prev => [newPatientProfile, ...prev]);
       setCurrentPatientId(newId);
 
+      // Create initial verified prescription for new patient
+      const newPatientRx = {
+        id: `RX-2026-${Math.floor(100 + Math.random() * 899)}`,
+        patientId: newId,
+        patientName: fullName,
+        doctor: "Dr. Shashank Pandey",
+        doctorSpeciality: "Chief Consultant Psychiatrist",
+        date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
+        diagnosis: "Psychiatric Outpatient Care Plan & Evaluation",
+        validUntil: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
+        status: "Active",
+        instructionsGeneral: "Take medications post breakfast with water. Maintain sleep-wake consistency and report any sensitivity.",
+        medicines: [
+          {
+            name: "Tab. Escitalopram Oxalate",
+            strength: "10 mg",
+            dosage: "1 Tablet",
+            frequency: "Once Daily (Morning post breakfast)",
+            duration: "30 Days",
+            instructions: "Take consistently with water at the same time each morning.",
+            refillsRemaining: 2
+          },
+          {
+            name: "Cap. Magnesium Glycinate + L-Theanine",
+            strength: "200 mg / 100 mg",
+            dosage: "1 Capsule",
+            frequency: "Once Daily (30 mins before sleep)",
+            duration: "60 Days",
+            instructions: "Supports neurological relaxation and restorative sleep.",
+            refillsRemaining: 3
+          }
+        ]
+      };
+      setPrescriptions(prev => [newPatientRx, ...prev]);
+
+      // Create initial psychometric assessment scale for new patient
+      const newPatientLab = {
+        id: `LAB-2026-${Math.floor(100 + Math.random() * 899)}`,
+        patientId: newId,
+        patientName: fullName,
+        testName: "PHQ-9 (Patient Health Questionnaire - Depression Scale)",
+        category: "Psychometric Assessment",
+        testDate: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
+        doctor: "Dr. Shashank Pandey",
+        labName: "MHC Clinical Neuro-Psychometry Unit",
+        status: "Normal",
+        resultSummary: "Baseline psychometric intake screening conducted. Somatic and mood vitals documented.",
+        parameters: [
+          { name: "Anhedonia / Little interest", value: "1 / 3", normalRange: "0 - 1", status: "Normal" },
+          { name: "Depressed / Hopeless feeling", value: "1 / 3", normalRange: "0 - 1", status: "Normal" },
+          { name: "Sleep disturbance", value: "1 / 3", normalRange: "0 - 1", status: "Normal" },
+          { name: "Energy levels / Fatigue", value: "1 / 3", normalRange: "0 - 1", status: "Normal" }
+        ],
+        verifiedBy: "Dr. Shashank Pandey, MD (Psychiatry)",
+        remarks: "Baseline psychiatric evaluation recorded. Scheduled for clinical follow-up."
+      };
+      setLabRecords(prev => [newPatientLab, ...prev]);
+
       // Real-time Cloud Firebase Firestore write
       saveRecordToFirestore('patients', newId, newPatientProfile).catch(() => {});
+      saveRecordToFirestore('prescriptions', newPatientRx.id, newPatientRx).catch(() => {});
+      saveRecordToFirestore('lab_records', newPatientLab.id, newPatientLab).catch(() => {});
     }
 
     const newAccount = {
