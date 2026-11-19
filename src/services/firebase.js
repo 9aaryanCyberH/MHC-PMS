@@ -3,12 +3,12 @@
 // Zero external package dependency required - works natively in any browser/Vite environment
 
 export const defaultFirebaseConfig = {
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "aarogyam-mhc-pms-firestore",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "aarogyam-774e2",
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD-AarogyamDemoKey2026SparkPlan",
-  authDomain: "aarogyam-mhc-pms-firestore.firebaseapp.com",
-  storageBucket: "aarogyam-mhc-pms-firestore.appspot.com",
-  messagingSenderId: "89201482019",
-  appId: "1:89201482019:web:a89fc01e892c90"
+  authDomain: "aarogyam-774e2.firebaseapp.com",
+  storageBucket: "aarogyam-774e2.appspot.com",
+  messagingSenderId: "460801024910",
+  appId: "1:460801024910:web:a89fc01e892c90"
 };
 
 // Retrieve active configuration from localStorage or environment
