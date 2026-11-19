@@ -41,12 +41,31 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     logout, 
     currentRole,
     currentUser,
+    patientProfile,
     appointments,
     isSidebarCollapsed,
     setIsSidebarCollapsed 
   } = useApp();
 
-  const upcomingCount = appointments.filter(a => a.status === 'Upcoming').length;
+  // Strict role & patient data isolation for upcoming appointments badge
+  const userUpcomingAppointments = React.useMemo(() => {
+    if (currentRole === 'patient') {
+      const activeId = patientProfile?.id || currentUser?.id;
+      const activeName = patientProfile?.fullName || currentUser?.fullName || currentUser?.name;
+      if (!activeId && !activeName) return [];
+      return appointments.filter(a => 
+        a.status === 'Upcoming' && 
+        ((activeId && a.patientId === activeId) || (activeName && a.patientName === activeName))
+      );
+    }
+    if (currentRole === 'doctor') {
+      return appointments.filter(a => a.status === 'Upcoming');
+    }
+    return appointments.filter(a => a.status === 'Upcoming');
+  }, [appointments, currentRole, currentUser, patientProfile]);
+
+  // Hide badge if the user is actively viewing their appointments
+  const upcomingCount = activeTab === 'appointments' ? 0 : userUpcomingAppointments.length;
 
   const handleNav = (tabId) => {
     setActiveTab(tabId);
