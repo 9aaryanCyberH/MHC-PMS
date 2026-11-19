@@ -1363,6 +1363,29 @@ export const AppProvider = ({ children }) => {
 
     showToast(`Account registered successfully! Welcome, ${patientData.fullName}.`);
     logSystemEvent('New Patient Registration', `Self-registered new patient: ${patientData.fullName} (${newId})`);
+
+    // Real-time Cloud Firebase Firestore write
+    saveRecordToFirestore('patients', newId, newProfile).catch(() => {});
+    saveRecordToFirestore('user_accounts', newId, {
+      id: newId,
+      name: patientData.fullName,
+      email: patientData.email,
+      role: 'Patient',
+      status: 'Active',
+      registeredDate: new Date().toISOString().split('T')[0],
+      clinicNode: 'Central Hospital OPD',
+      password: patientData.password || ''
+    }).catch(() => {});
+    if (patientData.password) {
+      saveRecordToFirestore('user_credentials', newId, {
+        id: newId,
+        email: patientData.email,
+        password: patientData.password,
+        role: 'patient',
+        name: patientData.fullName
+      }).catch(() => {});
+    }
+
     return { success: true, id: newId, email: patientData.email };
   };
 
@@ -1989,11 +2012,72 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Comprehensive merged patient records resolver (combines live records, profiles, and cloud-registered accounts)
+  const getAllPatientRecords = () => {
+    const map = new Map();
+
+    // 1. Live patientRecordsList
+    (patientRecordsList || []).forEach(p => {
+      if (p && p.id) map.set(p.id, p);
+    });
+
+    // 2. Patient profiles dictionary (includes any self-registered users)
+    Object.values(patientProfiles || {}).forEach(prof => {
+      if (prof && prof.id) {
+        const existing = map.get(prof.id) || {};
+        map.set(prof.id, {
+          ...existing,
+          ...prof,
+          fullName: prof.fullName || existing.fullName || 'Registered Patient',
+          dob: prof.dob || existing.dob || '2000-01-01',
+          age: prof.age || existing.age || 24,
+          gender: prof.gender || existing.gender || 'Not specified',
+          bloodGroup: prof.bloodGroup || existing.bloodGroup || 'O+',
+          phone: prof.phone || existing.phone || '+91 98000 00000',
+          email: prof.email || existing.email || '',
+          address: prof.address || existing.address || 'Bengaluru, KA',
+          assignedDoctor: prof.assignedDoctor || existing.assignedDoctor || 'Dr. Shashank Pandey',
+          primaryDiagnosis: prof.primaryDiagnosis || existing.primaryDiagnosis || 'Intake Evaluation Scheduled',
+          severity: prof.severity || existing.severity || 'Mild',
+          clinicNode: prof.clinicNode || existing.clinicNode || 'Central Hospital OPD',
+          activeStatus: prof.activeStatus || existing.activeStatus || 'Active Outpatient'
+        });
+      }
+    });
+
+    // 3. User accounts directory (Patients)
+    (userAccounts || []).forEach(acc => {
+      if (acc && acc.id && (acc.role === 'Patient' || acc.id.startsWith('PT-'))) {
+        if (!map.has(acc.id)) {
+          map.set(acc.id, {
+            id: acc.id,
+            fullName: acc.name,
+            email: acc.email,
+            phone: acc.phone || '+91 98000 00000',
+            age: Number(acc.age) || 24,
+            gender: acc.gender || 'Not specified',
+            bloodGroup: acc.bloodGroup || 'O+',
+            dob: '2000-01-01',
+            address: 'Bengaluru, KA',
+            assignedDoctor: 'Dr. Shashank Pandey',
+            primaryDiagnosis: 'Intake Evaluation Scheduled',
+            severity: 'Mild',
+            clinicNode: acc.clinicNode || 'Central Hospital OPD',
+            activeStatus: 'Active Outpatient'
+          });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  };
+
   // Microsoft Excel Multi-Sheet Export Engine
   const exportMasterDatabaseToExcel = () => {
     try {
+      const allPatients = getAllPatientRecords();
       const res = exportFullMHCWorkbook({
-        patientRecords: patientRecordsList,
+        patientRecords: allPatients,
         appointments,
         prescriptions,
         labRecords,
@@ -2013,7 +2097,11 @@ export const AppProvider = ({ children }) => {
 
   const exportCollectionToCsv = (collectionName, items) => {
     try {
-      const res = exportSingleCollectionToCsv(collectionName, items);
+      let exportItems = items;
+      if (collectionName === 'Patients_Registry' || collectionName === 'patient_records') {
+        exportItems = getAllPatientRecords();
+      }
+      const res = exportSingleCollectionToCsv(collectionName, exportItems);
       if (res.success) {
         showToast(`Exported ${collectionName} table to CSV (${res.fileName})!`);
         logSystemEvent('CSV Export', `Exported ${collectionName} records to CSV format`);
