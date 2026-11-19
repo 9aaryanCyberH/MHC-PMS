@@ -31,3 +31,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_AAROGYAM_774E2 }}'
           channelId: live
           projectId: aarogyam-774e2
+

@@ -31,3 +31,4 @@ jobs:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_AAROGYAM_774E2 }}'
           projectId: aarogyam-774e2
+
