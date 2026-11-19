@@ -70,7 +70,7 @@ export const LoginView = () => {
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
   // Handle Sign In Submit
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -87,18 +87,21 @@ export const LoginView = () => {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const res = login(cleanId, cleanPass);
+    try {
+      const res = await login(cleanId, cleanPass);
       setIsLoading(false);
 
       if (!res.success) {
         setError(res.error || 'Authentication failed. Please verify your credentials.');
       }
-    }, 350);
+    } catch (err) {
+      setIsLoading(false);
+      setError('Authentication check failed. Please verify your credentials and try again.');
+    }
   };
 
   // Handle Sign Up Submit
-  const handleSignUpSubmit = (e) => {
+  const handleSignUpSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
@@ -125,8 +128,8 @@ export const LoginView = () => {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      const res = registerAccount({
+    try {
+      const res = await registerAccount({
         role: 'Patient',
         fullName: regName.trim(),
         email: regEmail.trim(),
@@ -141,15 +144,22 @@ export const LoginView = () => {
       if (!res.success) {
         setError(res.error || 'Registration failed. Please check your inputs.');
       } else {
-        setSuccessMessage(`Account created successfully for ${res.account.name}!`);
-        showToast(`Account created successfully! Welcome to Aarogyam.`, 'success');
+        setSuccessMessage(`Account created successfully for ${res.account.name}! Credentials saved to database. You can sign in below.`);
+        showToast(`Account created successfully! Credentials saved.`, 'success');
         
-        // Populate identifier with the newly registered email and switch to login tab
+        // Ensure patient role mode
+        setIsAdminMode(false);
+        setCurrentRole('patient');
+
+        // Populate identifier with the newly registered email and keep password populated for effortless sign-in
         setIdentifier(regEmail.trim());
-        setPassword('');
+        setPassword(regPassword);
         setAuthMode('login');
       }
-    }, 400);
+    } catch (err) {
+      setIsLoading(false);
+      setError('An error occurred during account registration. Please try again.');
+    }
   };
 
   // Handle Password Reset

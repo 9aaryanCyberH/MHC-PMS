@@ -19,6 +19,7 @@ import {
   testFirebaseConnection, 
   syncCollectionToFirestore, 
   fetchCollectionFromFirestore,
+  fetchDocumentFromFirestore,
   isFirebaseConfigured,
   saveRecordToFirestore
 } from '../services/firebase';
@@ -410,6 +411,115 @@ export const AppProvider = ({ children }) => {
     isSyncing: false
   });
 
+  // On App Mount: Real-time Cloud Firestore synchronization & account hydration
+  useEffect(() => {
+    let isMounted = true;
+    const hydrateFromFirestore = async () => {
+      try {
+        const [cloudAccounts, cloudPatients, cloudPrescriptions, cloudLabs] = await Promise.all([
+          fetchCollectionFromFirestore('user_accounts').catch(() => ({ success: false })),
+          fetchCollectionFromFirestore('patients').catch(() => ({ success: false })),
+          fetchCollectionFromFirestore('prescriptions').catch(() => ({ success: false })),
+          fetchCollectionFromFirestore('lab_records').catch(() => ({ success: false }))
+        ]);
+
+        if (!isMounted) return;
+
+        // Hydrate accounts & passwords from Cloud Firestore
+        if (cloudAccounts.success && Array.isArray(cloudAccounts.data) && cloudAccounts.data.length > 0) {
+          setUserAccounts(prev => {
+            const map = new Map();
+            prev.forEach(acc => map.set(acc.id, acc));
+            cloudAccounts.data.forEach(acc => {
+              if (acc.id) {
+                map.set(acc.id, { ...map.get(acc.id), ...acc });
+              }
+            });
+            const merged = Array.from(map.values());
+            try { localStorage.setItem('mhc_user_accounts', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+
+          setUserPasswords(prev => {
+            const updated = { ...prev };
+            cloudAccounts.data.forEach(acc => {
+              if (acc.id && acc.password) {
+                updated[acc.id] = acc.password;
+                updated[acc.id.toLowerCase()] = acc.password;
+                if (acc.email) updated[acc.email.toLowerCase()] = acc.password;
+              }
+            });
+            try { localStorage.setItem('mhc_user_passwords', JSON.stringify(updated)); } catch {}
+            return updated;
+          });
+        }
+
+        // Hydrate patient profiles from Cloud Firestore
+        if (cloudPatients.success && Array.isArray(cloudPatients.data) && cloudPatients.data.length > 0) {
+          setPatientProfiles(prev => {
+            const updated = { ...prev };
+            cloudPatients.data.forEach(p => {
+              if (p.id) updated[p.id] = { ...updated[p.id], ...p };
+            });
+            try { localStorage.setItem('mhc_patients_data', JSON.stringify(updated)); } catch {}
+            return updated;
+          });
+
+          setPatientRecordsList(prev => {
+            const map = new Map();
+            prev.forEach(p => map.set(p.id, p));
+            cloudPatients.data.forEach(p => {
+              if (p.id) map.set(p.id, { ...map.get(p.id), ...p });
+            });
+            const merged = Array.from(map.values());
+            try { localStorage.setItem('mhc_patient_records_list', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+
+        // Hydrate prescriptions from Cloud Firestore
+        if (cloudPrescriptions.success && Array.isArray(cloudPrescriptions.data) && cloudPrescriptions.data.length > 0) {
+          setPrescriptions(prev => {
+            const map = new Map();
+            prev.forEach(rx => map.set(rx.id, rx));
+            cloudPrescriptions.data.forEach(rx => {
+              if (rx.id) map.set(rx.id, { ...map.get(rx.id), ...rx });
+            });
+            const merged = Array.from(map.values());
+            try { localStorage.setItem('mhc_prescriptions', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+
+        // Hydrate lab records from Cloud Firestore
+        if (cloudLabs.success && Array.isArray(cloudLabs.data) && cloudLabs.data.length > 0) {
+          setLabRecords(prev => {
+            const map = new Map();
+            prev.forEach(lab => map.set(lab.id, lab));
+            cloudLabs.data.forEach(lab => {
+              if (lab.id) map.set(lab.id, { ...map.get(lab.id), ...lab });
+            });
+            const merged = Array.from(map.values());
+            try { localStorage.setItem('mhc_lab_records', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+
+        setFirebaseSyncStatus({
+          isConnected: true,
+          lastSynced: new Date().toLocaleTimeString(),
+          error: null,
+          isSyncing: false
+        });
+      } catch (err) {
+        console.warn('Initial Firestore hydration notice:', err);
+      }
+    };
+
+    hydrateFromFirestore();
+    return () => { isMounted = false; };
+  }, []);
+
   // Sidebar collapse toggle state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -580,22 +690,44 @@ export const AppProvider = ({ children }) => {
   };
 
   // Structured Chart 0.1.3: Password Change
-  const changePassword = (userId, newPassword) => {
+  const changePassword = async (userId, newPassword) => {
     if (!newPassword || newPassword.length < 4) {
       showToast('Password must be at least 4 characters long.', 'error');
       return { success: false, error: 'Password too short' };
     }
+    const cleanUid = (userId || '').trim();
     setUserPasswords(prev => ({
       ...prev,
-      [userId]: newPassword
+      [cleanUid]: newPassword,
+      [cleanUid.toLowerCase()]: newPassword
     }));
-    logSystemEvent('Password Change', `Password updated for account ID ${userId}`);
-    showToast(`Password updated successfully for account ${userId}.`);
+
+    // Update in userAccounts if present
+    setUserAccounts(prev => prev.map(a => 
+      (a.id === cleanUid || (a.email && a.email.toLowerCase() === cleanUid.toLowerCase())) 
+        ? { ...a, password: newPassword } 
+        : a
+    ));
+
+    // Update localStorage
+    try {
+      const storedPass = JSON.parse(localStorage.getItem('mhc_user_passwords') || '{}');
+      storedPass[cleanUid] = newPassword;
+      storedPass[cleanUid.toLowerCase()] = newPassword;
+      localStorage.setItem('mhc_user_passwords', JSON.stringify(storedPass));
+    } catch {}
+
+    // Update Firestore
+    await saveRecordToFirestore('user_credentials', cleanUid, { id: cleanUid, password: newPassword, updatedAt: new Date().toISOString() }).catch(() => {});
+    await saveRecordToFirestore('user_accounts', cleanUid, { password: newPassword, updatedAt: new Date().toISOString() }).catch(() => {});
+
+    logSystemEvent('Password Change', `Password updated for account ID ${cleanUid}`);
+    showToast(`Password updated successfully for account ${cleanUid}.`);
     return { success: true };
   };
 
   // Universal Authentication & Verification
-  const login = (arg1, arg2, arg3 = null) => {
+  const login = async (arg1, arg2, arg3 = null) => {
     let identifier = '';
     let password = '';
 
@@ -617,13 +749,67 @@ export const AppProvider = ({ children }) => {
       return { success: false, error: 'Please enter your account password.' };
     }
 
-    // 1. Search in userAccounts with intelligent matching
+    // 1. Search in local userAccounts with intelligent matching
     let matchedAccount = userAccounts.find(acc => 
-      acc.email.toLowerCase() === cleanId || 
-      acc.id.toLowerCase() === cleanId ||
-      acc.email.toLowerCase().replace('@mhc-pms.org', '@aarogyam.org') === cleanId ||
-      acc.email.toLowerCase().replace('@aarogyam.org', '@mhc-pms.org') === cleanId
+      (acc.email && acc.email.toLowerCase() === cleanId) || 
+      (acc.id && acc.id.toLowerCase() === cleanId) ||
+      (acc.name && acc.name.toLowerCase() === cleanId) ||
+      (acc.email && acc.email.toLowerCase().replace('@mhc-pms.org', '@aarogyam.org') === cleanId) ||
+      (acc.email && acc.email.toLowerCase().replace('@aarogyam.org', '@mhc-pms.org') === cleanId)
     );
+
+    // 2. If not found in memory, query Cloud Firestore user_accounts in real time
+    if (!matchedAccount) {
+      try {
+        const cloudRes = await fetchCollectionFromFirestore('user_accounts');
+        if (cloudRes.success && Array.isArray(cloudRes.data) && cloudRes.data.length > 0) {
+          const cloudMatch = cloudRes.data.find(acc => 
+            (acc.email && acc.email.toLowerCase() === cleanId) || 
+            (acc.id && acc.id.toLowerCase() === cleanId) ||
+            (acc.name && acc.name.toLowerCase() === cleanId)
+          );
+          if (cloudMatch) {
+            matchedAccount = cloudMatch;
+            setUserAccounts(prev => {
+              const exists = prev.some(a => a.id === cloudMatch.id);
+              const updated = exists ? prev : [cloudMatch, ...prev];
+              try { localStorage.setItem('mhc_user_accounts', JSON.stringify(updated)); } catch {}
+              return updated;
+            });
+            if (cloudMatch.password) {
+              setUserPasswords(prev => {
+                const updated = {
+                  ...prev,
+                  [cloudMatch.id]: cloudMatch.password,
+                  [cloudMatch.id.toLowerCase()]: cloudMatch.password,
+                  [cloudMatch.email.toLowerCase()]: cloudMatch.password
+                };
+                try { localStorage.setItem('mhc_user_passwords', JSON.stringify(updated)); } catch {}
+                return updated;
+              });
+            }
+            if (cloudMatch.role?.toLowerCase().includes('patient')) {
+              const patRes = await fetchDocumentFromFirestore('patients', cloudMatch.id);
+              if (patRes.success && patRes.data) {
+                setPatientProfiles(prev => {
+                  const updated = { ...prev, [cloudMatch.id]: patRes.data };
+                  try { localStorage.setItem('mhc_patients_data', JSON.stringify(updated)); } catch {}
+                  return updated;
+                });
+                setPatientRecordsList(prev => {
+                  const exists = prev.some(p => p.id === cloudMatch.id);
+                  const updated = exists ? prev : [patRes.data, ...prev];
+                  try { localStorage.setItem('mhc_patient_records_list', JSON.stringify(updated)); } catch {}
+                  return updated;
+                });
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Real-time Firestore user lookup notice:', err);
+      }
+    }
 
     // Support role-based identifier matching for staff/admin gateways
     if (!matchedAccount) {
@@ -662,11 +848,45 @@ export const AppProvider = ({ children }) => {
         };
       }
 
-      const expectedPassword = userPasswords[matchedAccount.id] || 
-        userPasswords[matchedAccount.email.toLowerCase()] || 
-        (matchedAccount.role === 'Doctor' ? 'doctor123' : 
-         matchedAccount.role === 'Receptionist' ? 'reception123' : 
-         matchedAccount.role === 'System Admin' ? 'admin123' : 'patient123');
+      let expectedPassword = 
+        userPasswords[matchedAccount.id] || 
+        userPasswords[matchedAccount.id.toLowerCase()] || 
+        (matchedAccount.email && userPasswords[matchedAccount.email.toLowerCase()]) || 
+        matchedAccount.password;
+
+      // If password not found in local cache or mismatch, verify against Cloud Firestore credentials
+      if (!expectedPassword || (cleanPass !== expectedPassword && cleanPass !== 'demo' && cleanPass !== '123456')) {
+        try {
+          const credRes = await fetchDocumentFromFirestore('user_credentials', matchedAccount.id);
+          if (credRes.success && credRes.data?.password) {
+            expectedPassword = credRes.data.password;
+            setUserPasswords(prev => ({
+              ...prev,
+              [matchedAccount.id]: expectedPassword,
+              [matchedAccount.id.toLowerCase()]: expectedPassword,
+              [matchedAccount.email.toLowerCase()]: expectedPassword
+            }));
+          } else {
+            const accRes = await fetchDocumentFromFirestore('user_accounts', matchedAccount.id);
+            if (accRes.success && accRes.data?.password) {
+              expectedPassword = accRes.data.password;
+              setUserPasswords(prev => ({
+                ...prev,
+                [matchedAccount.id]: expectedPassword,
+                [matchedAccount.id.toLowerCase()]: expectedPassword,
+                [matchedAccount.email.toLowerCase()]: expectedPassword
+              }));
+            }
+          }
+        } catch {}
+      }
+
+      if (!expectedPassword) {
+        expectedPassword = 
+          (matchedAccount.role === 'Doctor' ? 'doctor123' : 
+           matchedAccount.role === 'Receptionist' ? 'reception123' : 
+           matchedAccount.role === 'System Admin' ? 'admin123' : 'patient123');
+      }
 
       // Valid default passwords for each role
       const validRolePasswords = {
@@ -686,7 +906,7 @@ export const AppProvider = ({ children }) => {
         return { success: false, error: 'Invalid password. Please check your credentials.' };
       }
 
-      const normRole = matchedAccount.role.toLowerCase().replace('system ', '').trim();
+      const normRole = (matchedAccount.role || 'patient').toLowerCase().replace('system ', '').trim();
       const actualRole = normRole === 'doctor' ? 'doctor' :
         normRole === 'receptionist' ? 'receptionist' :
         normRole === 'admin' ? 'admin' : 'patient';
@@ -723,6 +943,7 @@ export const AppProvider = ({ children }) => {
             severity: 'Mild'
           };
           setPatientProfiles(prev => ({ ...prev, [matchedAccount.id]: newPatientProf }));
+          saveRecordToFirestore('patients', matchedAccount.id, newPatientProf).catch(() => {});
         }
       } else if (actualRole === 'doctor') {
         setStaffProfiles(prev => ({
@@ -766,7 +987,7 @@ export const AppProvider = ({ children }) => {
       return { success: true, user: matchedAccount, role: actualRole };
     }
 
-    // 2. Check predefined default users
+    // 3. Check predefined default users
     const defaultUsers = [
       { id: 'ADM-001', email: 'shounak.sarkar@mhc-pms.org', role: 'admin', name: staffProfiles.admin?.fullName || 'Shounak Sarkar', pass: 'admin123', tab: 'adm-accounts' },
       { id: 'DOC-001', email: 'shashank.pandey@mhc-pms.org', role: 'doctor', name: staffProfiles.doctor?.fullName || 'Dr. Shashank Pandey', pass: 'doctor123', tab: 'doc-queue' },
@@ -806,7 +1027,7 @@ export const AppProvider = ({ children }) => {
   };
 
   // Universal Account Registration (All Roles: Patient, Doctor, Receptionist, Admin)
-  const registerAccount = (data) => {
+  const registerAccount = async (data) => {
     const role = (data.role || 'Patient').trim();
     const cleanEmail = (data.email || '').trim().toLowerCase();
     const fullName = (data.fullName || data.name || '').trim();
@@ -824,6 +1045,9 @@ export const AppProvider = ({ children }) => {
     let normalizedRole = 'patient';
     let roleTitle = 'Patient';
     let defaultTab = 'dashboard';
+    let newPatientProfile = null;
+    let newPatientRx = null;
+    let newPatientLab = null;
 
     if (role.toLowerCase().includes('doc')) {
       newId = `DOC-${Math.floor(100 + Math.random() * 899)}`;
@@ -888,7 +1112,7 @@ export const AppProvider = ({ children }) => {
       normalizedRole = 'patient';
       roleTitle = 'Patient';
       defaultTab = 'dashboard';
-      const newPatientProfile = {
+      newPatientProfile = {
         id: newId,
         fullName,
         email: cleanEmail,
@@ -922,7 +1146,7 @@ export const AppProvider = ({ children }) => {
       setCurrentPatientId(newId);
 
       // Create initial verified prescription for new patient
-      const newPatientRx = {
+      newPatientRx = {
         id: `RX-2026-${Math.floor(100 + Math.random() * 899)}`,
         patientId: newId,
         patientName: fullName,
@@ -957,7 +1181,7 @@ export const AppProvider = ({ children }) => {
       setPrescriptions(prev => [newPatientRx, ...prev]);
 
       // Create initial psychometric assessment scale for new patient
-      const newPatientLab = {
+      newPatientLab = {
         id: `LAB-2026-${Math.floor(100 + Math.random() * 899)}`,
         patientId: newId,
         patientName: fullName,
@@ -978,11 +1202,6 @@ export const AppProvider = ({ children }) => {
         remarks: "Baseline psychiatric evaluation recorded. Scheduled for clinical follow-up."
       };
       setLabRecords(prev => [newPatientLab, ...prev]);
-
-      // Real-time Cloud Firebase Firestore write
-      saveRecordToFirestore('patients', newId, newPatientProfile).catch(() => {});
-      saveRecordToFirestore('prescriptions', newPatientRx.id, newPatientRx).catch(() => {});
-      saveRecordToFirestore('lab_records', newPatientLab.id, newPatientLab).catch(() => {});
     }
 
     const newAccount = {
@@ -995,7 +1214,9 @@ export const AppProvider = ({ children }) => {
       lastLogin: 'Just now',
       phone: data.phone || '',
       age: data.age || '',
+      gender: data.gender || '',
       bloodGroup: data.bloodGroup || '',
+      password: password,
       registeredAt: new Date().toISOString()
     };
 
@@ -1003,14 +1224,57 @@ export const AppProvider = ({ children }) => {
     setUserPasswords(prev => ({
       ...prev,
       [newId]: password,
+      [newId.toLowerCase()]: password,
       [cleanEmail]: password
     }));
 
-    // Real-time Cloud Firebase Firestore write for user accounts directory
-    saveRecordToFirestore('user_accounts', newId, newAccount).catch(() => {});
+    // Immediate synchronous write to localStorage for instant availability
+    try {
+      const storedAccounts = JSON.parse(localStorage.getItem('mhc_user_accounts') || '[]');
+      localStorage.setItem('mhc_user_accounts', JSON.stringify([newAccount, ...storedAccounts.filter(a => a.id !== newId && a.email !== cleanEmail)]));
+
+      const storedPass = JSON.parse(localStorage.getItem('mhc_user_passwords') || '{}');
+      storedPass[newId] = password;
+      storedPass[newId.toLowerCase()] = password;
+      storedPass[cleanEmail] = password;
+      localStorage.setItem('mhc_user_passwords', JSON.stringify(storedPass));
+
+      if (newPatientProfile) {
+        const storedPatients = JSON.parse(localStorage.getItem('mhc_patients_data') || '{}');
+        storedPatients[newId] = newPatientProfile;
+        localStorage.setItem('mhc_patients_data', JSON.stringify(storedPatients));
+      }
+    } catch (e) {
+      console.warn('LocalStorage write notice:', e);
+    }
+
+    // Real-time Cloud Firebase Firestore write
+    try {
+      await saveRecordToFirestore('user_accounts', newId, newAccount);
+      await saveRecordToFirestore('user_credentials', newId, {
+        id: newId,
+        email: cleanEmail,
+        password: password,
+        role: normalizedRole,
+        name: fullName,
+        registeredAt: new Date().toISOString()
+      });
+
+      if (newPatientProfile) {
+        await saveRecordToFirestore('patients', newId, newPatientProfile);
+      }
+      if (newPatientRx) {
+        await saveRecordToFirestore('prescriptions', newPatientRx.id, newPatientRx);
+      }
+      if (newPatientLab) {
+        await saveRecordToFirestore('lab_records', newPatientLab.id, newPatientLab);
+      }
+    } catch (cloudErr) {
+      console.warn('Cloud Firestore registration notice:', cloudErr);
+    }
 
     logSystemEvent('Account Created', `New ${roleTitle} registered: ${fullName} (${cleanEmail})`);
-    return { success: true, account: newAccount, id: newId, role: normalizedRole, defaultTab };
+    return { success: true, account: newAccount, id: newId, role: normalizedRole, defaultTab, password };
   };
 
   const logout = () => {

@@ -253,3 +253,32 @@ export const fetchCollectionFromFirestore = async (collectionName) => {
     return { success: false, data: [], error: err.message, offline: true };
   }
 };
+
+// 7. Fetch a Single Document from Firestore
+export const fetchDocumentFromFirestore = async (collectionName, docId) => {
+  const config = getActiveFirebaseConfig();
+  if (!config.projectId || !docId) {
+    return { success: false, data: null, offline: true };
+  }
+
+  const cleanDocId = encodeURIComponent(String(docId));
+  const baseUrl = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents/${encodeURIComponent(collectionName)}/${cleanDocId}`;
+  const url = config.apiKey ? `${baseUrl}?key=${encodeURIComponent(config.apiKey)}` : baseUrl;
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (response.ok) {
+      const doc = await response.json();
+      const id = doc.name ? doc.name.split('/').pop() : docId;
+      const data = fromFirestoreFields(doc.fields || {});
+      return { success: true, data: { id, ...data }, offline: false };
+    }
+    return { success: false, data: null, offline: true };
+  } catch (err) {
+    return { success: false, data: null, error: err.message, offline: true };
+  }
+};
